@@ -25,6 +25,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          GITHUB_PAGES: 'true'
       # GitHub Pages is a static host with no server-side rewrites: without this, refreshing
       # or deep-linking to any client-side route (e.g. /restaurants) would 404. Serving a copy
       # of index.html as 404.html lets the SPA's router take over and render the right page.

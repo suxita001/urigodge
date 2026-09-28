@@ -10,7 +10,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   cacheDir: join(tmpdir(), 'urigod-vite-cache'),
-  // The site is deployed to https://suxita001.github.io/urigodge/, a subpath,
-  // so every asset URL must be prefixed with the repo name.
-  base: '/urigodge/',
+  // GitHub Pages serves this site from a subpath (/urigodge/), so asset URLs need
+  // that prefix there. Vercel (and any other host) serves it from the domain root,
+  // so base must stay '/' everywhere else. The GitHub Actions workflow sets
+  // GITHUB_PAGES=true only for that one build.
+  base: process.env.GITHUB_PAGES ? '/urigodge/' : '/',
 })
