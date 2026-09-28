@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Must match SUPER_ADMIN_EMAIL in src/utils/roles.ts and firestore.rules.
+    function isSuperAdmin() {
+      return request.auth != null
+        && request.auth.token.get('email', '').lower() == 'nikasuxita96@gmail.com'
+        && request.auth.token.get('email_verified', false) == true;
+    }
+
+    function profile() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActiveRole(r) {
+      return request.auth != null
+        && profile().role == r
+        && profile().get('status', 'active') == 'active';
+    }
+
+    function canManage(restaurantId) {
+      return isSuperAdmin()
+        || isActiveRole('admin')
+        || (isActiveRole('restaurant_manager') && restaurantId in profile().get('managedRestaurantIds', []));
+    }
+
+    function validImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // restaurants/{restaurantId}/{cover|gallery|menu|logo}/{file}
+    match /restaurants/{restaurantId}/{allPaths=**} {
+      allow read: if true;
+      allow create, update: if canManage(restaurantId) && validImage();
+      allow delete: if canManage(restaurantId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
