@@ -77,7 +77,7 @@ export default function App() {
       <ToastProvider>
         <AuthProvider>
           <RestaurantsProvider>
-            <BrowserRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
               <FavoritesProvider>
                 <ScrollToTop />
                 <Suspense fallback={<PageFallback />}>

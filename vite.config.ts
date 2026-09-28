@@ -10,4 +10,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   cacheDir: join(tmpdir(), 'urigod-vite-cache'),
+  // The site is deployed to https://suxita001.github.io/urigodge/, a subpath,
+  // so every asset URL must be prefixed with the repo name.
+  base: '/urigodge/',
 })
