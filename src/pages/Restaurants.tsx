@@ -6,9 +6,15 @@ import RestaurantGrid from '../components/RestaurantGrid'
 import SearchBar from '../components/SearchBar'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
+import { useSeo } from '../hooks/useSeo'
 import { defaultFilters, applyFilters, sortRestaurants, type FilterState, type SortOption } from '../lib/filters'
 import { searchRestaurants } from '../lib/search'
-import type { CategoryId } from '../data/types'
+import { categoryMap, cuisineMap } from '../data/categories'
+import { dishMap } from '../data/dishes'
+import { breadcrumbJsonLd, restaurantListJsonLd } from '../lib/seo'
+import type { CategoryId, CuisineId } from '../data/types'
+
+const listParam = (value: string | null) => (value ? value.split(',').filter(Boolean) : [])
 
 export default function Restaurants() {
   const { t, lang } = useLanguage()
@@ -18,23 +24,36 @@ export default function Restaurants() {
   const [sort, setSort] = useState<SortOption>('recommended')
   const [query, setQuery] = useState('')
 
+  // Deep links: /restaurants?category=pizza&cuisine=italian,french&dish=khinkali&q=...
   useEffect(() => {
-    const category = searchParams.get('category') as CategoryId | null
+    const category = searchParams.get('category')
+    const cuisinesParam = listParam(searchParams.get('cuisine')).filter((c) => c in cuisineMap) as CuisineId[]
+    const dishesParam = listParam(searchParams.get('dish')).filter((d) => d in dishMap)
+    setFilters((f) => ({
+      ...f,
+      category: category && category in categoryMap ? (category as CategoryId) : f.category,
+      cuisines: cuisinesParam.length ? cuisinesParam : f.cuisines,
+      dishes: dishesParam.length ? dishesParam : f.dishes,
+    }))
     const q = searchParams.get('q')
-    if (category) setFilters((f) => ({ ...f, category }))
     if (q) setQuery(q)
   }, [searchParams])
 
   const results = useMemo(() => {
     let list = restaurants
     if (query.trim()) {
-      const matched = searchRestaurants(restaurants, query, lang).map((r) => r.restaurant.id)
-      list = list.filter((r) => matched.includes(r.id))
+      const matched = new Set(searchRestaurants(restaurants, query, lang).map((r) => r.restaurant.id))
+      list = list.filter((r) => matched.has(r.id))
     }
     list = applyFilters(list, filters)
     list = sortRestaurants(list, sort, lang)
     return list
   }, [restaurants, filters, sort, query, lang])
+
+  useSeo(`${t('restaurants_title')} — ${t('seo_restaurants_title')} | urigod.ge`, t('seo_restaurants_description'), {
+    path: '/restaurants',
+    jsonLd: [breadcrumbJsonLd([{ name: t('nav_restaurants'), path: '/restaurants' }]), ...(restaurants.length ? [restaurantListJsonLd(restaurants.slice(0, 30))] : [])],
+  })
 
   return (
     <div className="max-w-7xl mx-auto px-5 md:px-8 py-10 md:py-14">
@@ -57,13 +76,11 @@ export default function Restaurants() {
         </div>
       )}
 
-      <div className="mt-6 sticky top-16 md:top-[72px] z-20 bg-cream/90 backdrop-blur-sm py-3 -mx-5 px-5 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none md:static">
+      <div className="mt-6 sticky top-16 md:top-[72px] z-20 bg-cream/95 py-3 -mx-5 px-5 md:mx-0 md:px-0 md:bg-transparent md:static">
         <FilterBar filters={filters} onChange={setFilters} sort={sort} onSortChange={setSort} resultCount={results.length} />
       </div>
 
-      {!loading && (
-        <p className="mt-5 text-[13.5px] text-ink-faint md:hidden">{t('results_count', { count: results.length })}</p>
-      )}
+      {!loading && <p className="mt-5 text-[13.5px] text-ink-faint md:hidden">{t('results_count', { count: results.length })}</p>}
 
       <div className="mt-6">
         <RestaurantGrid restaurants={results} loading={loading} />

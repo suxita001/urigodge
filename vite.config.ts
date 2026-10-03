@@ -15,4 +15,6 @@ export default defineConfig({
   // so base must stay '/' everywhere else. The GitHub Actions workflow sets
   // GITHUB_PAGES=true only for that one build.
   base: process.env.GITHUB_PAGES ? '/urigodge/' : '/',
+  // /api/* are Vercel functions; in local dev they are served by the deployed site.
+  server: { proxy: { '/api': { target: 'https://www.urigod.ge', changeOrigin: true } } },
 })

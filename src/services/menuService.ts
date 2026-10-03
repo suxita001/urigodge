@@ -1,5 +1,6 @@
 import type { ActivityAction, Branch, MenuCategoryData, MenuItem, Restaurant } from '../data/types'
 import { updateRestaurant } from './restaurantService'
+import { aiPriceLevel } from './aiService'
 
 export function newId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -88,7 +89,16 @@ export function describeMenuChanges(before: MenuCategoryData[], after: MenuCateg
 
 export async function saveMenu(restaurant: Restaurant, menu: MenuCategoryData[]): Promise<void> {
   const logs = describeMenuChanges(restaurant.menu, menu)
-  await updateRestaurant(restaurant, { menu }, logs.length ? logs : [{ action: 'MENU_UPDATED', description: 'მენიუ შენახულია' }])
+  // Prices changed, so the ₾ level is re-derived by AI (falls back to a local estimate, never blocks the save).
+  const hasPrices = menu.some((c) => c.items.some((i) => i.price > 0))
+  const priceLevel = hasPrices
+    ? await aiPriceLevel({ name: restaurant.nameI18n.ka || restaurant.name, category: restaurant.category, cuisine: restaurant.cuisine, menu }, restaurant.priceLevel)
+    : restaurant.priceLevel
+  await updateRestaurant(
+    restaurant,
+    priceLevel !== restaurant.priceLevel ? { menu, priceLevel } : { menu },
+    logs.length ? logs : [{ action: 'MENU_UPDATED', description: 'მენიუ შენახულია' }]
+  )
 }
 
 // ---- Branches ----

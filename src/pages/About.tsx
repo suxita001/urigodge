@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Compass, ScrollText, MapPin, QrCode } from 'lucide-react'
+import { Compass, ScrollText, MapPin, Sparkles } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useSeo } from '../hooks/useSeo'
 
@@ -11,7 +11,7 @@ export default function About() {
     { icon: Compass, text: t('about_feature_1') },
     { icon: ScrollText, text: t('about_feature_2') },
     { icon: MapPin, text: t('about_feature_3') },
-    { icon: QrCode, text: t('about_feature_4') },
+    { icon: Sparkles, text: t('about_feature_4') },
   ]
 
   return (

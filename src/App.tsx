@@ -8,6 +8,7 @@ import { FavoritesProvider } from './context/FavoritesContext'
 import { RequireAuth, RequireRole } from './components/RouteGuards'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import ChatWidget from './components/ChatWidget'
 import Home from './pages/Home'
 import Restaurants from './pages/Restaurants'
 import About from './pages/About'
@@ -16,6 +17,7 @@ import About from './pages/About'
 // as is the whole admin dashboard.
 const MapPage = lazy(() => import('./pages/MapPage'))
 const RestaurantDetail = lazy(() => import('./pages/RestaurantDetail'))
+const MenuPage = lazy(() => import('./pages/MenuPage'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
@@ -40,10 +42,16 @@ function ScrollToTop() {
   return null
 }
 
-// QR entry points: urigod.ge/r/:slug and urigod.ge/menu/:slug open the restaurant page with the menu already open.
-function QrRedirect() {
+// Short links (urigod.ge/menu/:slug, urigod.ge/r/:slug) go straight to the menu page.
+function MenuRedirect() {
   const { slug } = useParams<{ slug: string }>()
-  return <Navigate to={`/restaurant/${slug}?menu=1`} replace />
+  return <Navigate to={`/restaurants/${slug}/menu`} replace />
+}
+
+// Restaurant pages used to live at /restaurant/:slug.
+function LegacyRestaurantRedirect() {
+  const { slug } = useParams<{ slug: string }>()
+  return <Navigate to={`/restaurants/${slug}`} replace />
 }
 
 function PageFallback() {
@@ -65,6 +73,7 @@ function PublicLayout() {
         </Suspense>
       </main>
       {pathname !== '/map' && <Footer />}
+      <ChatWidget />
     </div>
   )
 }
@@ -87,9 +96,11 @@ export default function App() {
                       <Route path="/restaurants" element={<Restaurants />} />
                       <Route path="/map" element={<MapPage />} />
                       <Route path="/about" element={<About />} />
-                      <Route path="/restaurant/:slug" element={<RestaurantDetail />} />
-                      <Route path="/r/:slug" element={<QrRedirect />} />
-                      <Route path="/menu/:slug" element={<QrRedirect />} />
+                      <Route path="/restaurants/:slug" element={<RestaurantDetail />} />
+                      <Route path="/restaurants/:slug/menu" element={<MenuPage />} />
+                      <Route path="/restaurant/:slug" element={<LegacyRestaurantRedirect />} />
+                      <Route path="/r/:slug" element={<MenuRedirect />} />
+                      <Route path="/menu/:slug" element={<MenuRedirect />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />

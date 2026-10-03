@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { Sparkles } from 'lucide-react'
 import type { CuisineId, LocalizedText, PriceLevel } from '../../data/types'
 import { normalizeHours, type RestaurantInput } from '../../services/restaurantService'
 import { categories, cuisines, neighborhoods } from '../../data/categories'
@@ -6,6 +7,8 @@ import { Select, TextArea, TextInput, Toggle } from '../ui/Inputs'
 import { ImageUploader, GalleryUploader } from './ImageUploader'
 import HoursEditor from './HoursEditor'
 import LocationPicker from './LocationPicker'
+import { aiPriceLevel } from '../../services/aiService'
+import { priceLabel, priceSymbol } from '../../lib/format'
 
 export type Draft = RestaurantInput
 export type SetDraft = (patch: Partial<Draft>) => void
@@ -57,16 +60,7 @@ export function BasicInfoFields({ draft, set, errors = {}, showStatus }: { draft
       <Bilingual label="მოკლე აღწერა (ბარათისთვის)" value={draft.shortDescription ?? { ka: '', en: '' }} onChange={(shortDescription) => set({ shortDescription })} />
       <div className="grid sm:grid-cols-2 gap-4">
         <Select label="კატეგორია" value={draft.category} onValueChange={(v) => set({ category: v as Draft['category'] })} options={categories.map((c) => ({ value: c.id, label: c.label.ka }))} />
-        <Select
-          label="ფასის დონე"
-          value={String(draft.priceLevel)}
-          onValueChange={(v) => set({ priceLevel: Number(v) as PriceLevel })}
-          options={[
-            { value: '1', label: '₾ — ხელმისაწვდომი' },
-            { value: '2', label: '₾₾ — საშუალო' },
-            { value: '3', label: '₾₾₾ — პრემიუმ' },
-          ]}
-        />
+        <PriceLevelField draft={draft} set={set} />
       </div>
       <div>
         <p className="mb-2 text-[13px] font-semibold text-ink">სამზარეულო</p>
@@ -89,17 +83,53 @@ export function BasicInfoFields({ draft, set, errors = {}, showStatus }: { draft
           })}
         </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Toggle checked={draft.qrEnabled} onChange={(qrEnabled) => set({ qrEnabled })} label="QR მენიუ" description="urigod.ge/menu/slug პირდაპირ მენიუს გახსნის." />
-        {showStatus && (
+      {showStatus && (
+        <div className="grid sm:grid-cols-2 gap-4">
           <Toggle
             checked={draft.status !== 'draft'}
             onChange={(v) => set({ status: v ? 'published' : 'draft' })}
             label="გამოქვეყნებულია"
             description="გამორთვისას რესტორანი საიტზე აღარ გამოჩნდება."
           />
-        )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** The ₾ level is no longer picked by hand: AI derives it from the menu prices (also re-run on every menu save). */
+function PriceLevelField({ draft, set }: { draft: Draft; set: SetDraft }) {
+  const [busy, setBusy] = useState(false)
+  const hasPrices = draft.menu.some((c) => c.items.some((i) => i.price > 0))
+  const level = (draft.priceLevel || 2) as PriceLevel
+
+  async function evaluate() {
+    setBusy(true)
+    try {
+      set({ priceLevel: await aiPriceLevel({ name: draft.name.ka || draft.name.en, category: draft.category, cuisine: cuisineList(draft.cuisine), menu: draft.menu }, level) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div>
+      <p className="mb-1.5 text-[13px] font-semibold text-ink">ფასის დონე</p>
+      <div className="h-12 px-4 rounded-xl border border-border bg-cream-2/50 flex items-center justify-between gap-3">
+        <span className="text-[14.5px] font-bold text-ink">
+          {priceSymbol(level)} <span className="font-semibold text-ink-soft">— {priceLabel(level, 'ka')}</span>
+        </span>
+        <button
+          type="button"
+          onClick={evaluate}
+          disabled={busy || !hasPrices}
+          className="inline-flex items-center gap-1.5 text-[13px] font-bold text-green disabled:text-ink-faint disabled:cursor-not-allowed"
+        >
+          <Sparkles size={14} className={busy ? 'animate-pulse' : ''} />
+          {busy ? 'ფასდება…' : 'AI-ით შეფასება'}
+        </button>
       </div>
+      <p className="mt-1.5 text-[12px] text-ink-faint">{hasPrices ? 'AI ადგენს მენიუს ფასების მიხედვით — ახლდება მენიუს შენახვისას.' : 'დაადგენს AI, როცა მენიუს დაამატებ.'}</p>
     </div>
   )
 }

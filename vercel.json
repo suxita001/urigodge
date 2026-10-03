@@ -1,3 +1,13 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "redirects": [
+    { "source": "/restaurant/:slug", "destination": "/restaurants/:slug", "permanent": true },
+    { "source": "/menu/:slug", "destination": "/restaurants/:slug/menu", "permanent": true },
+    { "source": "/r/:slug", "destination": "/restaurants/:slug/menu", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/restaurants/:slug/menu", "destination": "/api/render?slug=:slug&menu=1" },
+    { "source": "/restaurants/:slug", "destination": "/api/render?slug=:slug" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }

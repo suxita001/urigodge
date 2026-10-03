@@ -184,7 +184,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
           </div>
         </div>
         <a
-          href={`/restaurant/${restaurant.slug}`}
+          href={`/restaurants/${restaurant.slug}`}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-border bg-white text-[13.5px] font-bold text-ink hover:bg-cream-2 self-start sm:self-center"

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, Navigate, useSearchParams } from 'react-router-dom'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   MapPin,
@@ -8,20 +8,21 @@ import {
   Globe,
   Navigation2,
   UtensilsCrossed,
-  QrCode,
+  ArrowRight,
 } from 'lucide-react'
 import { InstagramIcon, FacebookIcon } from '../components/SocialIcons'
 import { useRestaurant } from '../hooks/useRestaurants'
 import FavoriteButton from '../components/FavoriteButton'
 import { categoryMap, cuisineMap, neighborhoodMap } from '../data/categories'
 import { useLanguage } from '../i18n/LanguageContext'
-import { priceSymbol, priceLabel } from '../lib/format'
+import { priceSymbol, priceLabel, venueName } from '../lib/format'
 import { isOpenNow } from '../data/helpers'
 import { useSeo } from '../hooks/useSeo'
 import RestaurantGallery from '../components/RestaurantGallery'
-import MenuModal from '../components/MenuModal'
 import BranchCard from '../components/BranchCard'
 import MapView from '../components/MapView'
+import { breadcrumbJsonLd, restaurantJsonLd } from '../lib/seo'
+import { menuPath, restaurantPath } from '../lib/site'
 import type { Coordinates } from '../data/types'
 
 const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
@@ -63,18 +64,29 @@ function RestaurantDetailSkeleton() {
 
 export default function RestaurantDetail() {
   const { slug } = useParams<{ slug: string }>()
-  const [searchParams] = useSearchParams()
   const { t, tx, lang } = useLanguage()
-  // `?menu=1` is used by QR entry points (/menu/:slug, /r/:slug) to open the menu straight away.
-  const [menuOpen, setMenuOpen] = useState(() => searchParams.get('menu') === '1')
   const [focusTarget, setFocusTarget] = useState<Coordinates | undefined>(undefined)
   const [activeBranchId, setActiveBranchId] = useState<string | undefined>(undefined)
 
   const { restaurant, loading } = useRestaurant(slug)
+  const name = restaurant ? venueName(restaurant, lang) : ''
 
   useSeo(
-    restaurant ? `${restaurant.name} — მენიუ, მისამართი და ინფორმაცია | urigod.ge` : 'urigod.ge',
-    restaurant ? tx(restaurant.shortDescription) : undefined
+    restaurant ? `${name} — ${t('seo_restaurant_title')} | urigod.ge` : 'urigod.ge',
+    restaurant ? `${tx(restaurant.shortDescription)} ${tx(restaurant.address)}`.trim() : undefined,
+    restaurant
+      ? {
+          path: restaurantPath(restaurant.slug),
+          image: restaurant.coverImage || undefined,
+          jsonLd: [
+            restaurantJsonLd(restaurant, lang),
+            breadcrumbJsonLd([
+              { name: t('nav_restaurants'), path: '/restaurants' },
+              { name, path: restaurantPath(restaurant.slug) },
+            ]),
+          ],
+        }
+      : {}
   )
 
   if (loading) return <RestaurantDetailSkeleton />
@@ -82,22 +94,25 @@ export default function RestaurantDetail() {
 
   const openNow = isOpenNow(restaurant.openingHours)
   const mapRestaurants = [restaurant]
+  // A taste of the menu: items with photos first, six at most.
+  const allItems = restaurant.menu.flatMap((c) => c.items).filter((i) => i.available !== false)
+  const menuPreview = [...allItems.filter((i) => i.image), ...allItems.filter((i) => !i.image)].slice(0, 6)
 
   return (
     <div>
-      <RestaurantGallery images={restaurant.images} alt={restaurant.name} />
+      <RestaurantGallery images={restaurant.images} alt={name} />
 
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="pt-6 md:pt-8">
           <div className="flex flex-wrap items-center gap-2 text-[13px] font-semibold text-ink-faint">
             <Link to="/restaurants" className="hover:text-green">{t('nav_restaurants')}</Link>
             <span>/</span>
-            <span className="text-ink">{restaurant.name}</span>
+            <span className="text-ink">{name}</span>
           </div>
 
           <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-[26px] md:text-[36px] font-extrabold text-ink tracking-tight">{restaurant.name}</h1>
+              <h1 className="text-[26px] md:text-[36px] font-extrabold text-ink tracking-tight">{name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-ink-soft">
                 <span className="font-semibold text-green">{categoryMap[restaurant.category]?.label[lang]}</span>
                 <span className="text-border">•</span>
@@ -135,20 +150,14 @@ export default function RestaurantDetail() {
               <Phone size={16} />
               {t('restaurant_call')}
             </a>
-            <button
-              onClick={() => setMenuOpen(true)}
+            <Link
+              to={menuPath(restaurant.slug)}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-green text-green font-bold text-[14px] hover:bg-green-light transition-colors"
             >
               <UtensilsCrossed size={16} />
               {t('restaurant_menu')}
-            </button>
+            </Link>
             <FavoriteButton restaurantId={restaurant.slug} variant="pill" />
-            {restaurant.qrEnabled && (
-              <span className="inline-flex items-center gap-2 px-4 py-3 rounded-full bg-cream-2 text-ink-soft font-semibold text-[13px]">
-                <QrCode size={16} />
-                QR
-              </span>
-            )}
           </div>
         </motion.div>
 
@@ -159,6 +168,32 @@ export default function RestaurantDetail() {
               <h2 className="text-[18px] font-bold text-ink mb-3">{t('restaurant_info')}</h2>
               <p className="text-[15px] text-ink-soft leading-relaxed">{tx(restaurant.description)}</p>
             </section>
+
+            {menuPreview.length > 0 && (
+              <section className="mt-10">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <h2 className="text-[18px] font-bold text-ink">{t('menu_title')}</h2>
+                  <Link to={menuPath(restaurant.slug)} className="inline-flex items-center gap-1 text-[14px] font-bold text-green hover:gap-1.5 transition-all">
+                    {t('menu_full')}
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {menuPreview.map((item) => (
+                    <li key={item.id}>
+                      <Link to={menuPath(restaurant.slug)} className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-white hover:border-green/50 transition-colors">
+                        {item.image && <img src={item.image} alt={tx(item.name)} loading="lazy" className="w-14 h-14 rounded-xl object-cover shrink-0 bg-cream-2" />}
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-semibold text-[14.5px] text-ink truncate">{tx(item.name)}</span>
+                          <span className="block text-[12.5px] text-ink-faint truncate">{tx(item.description)}</span>
+                        </span>
+                        <span className="font-bold text-[14.5px] text-green whitespace-nowrap">{Number.isInteger(item.price) ? item.price : item.price.toFixed(2)} ₾</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="mt-10">
               <h2 className="text-[18px] font-bold text-ink mb-4">{t('restaurant_branches')} ({restaurant.branches.length})</h2>
@@ -277,7 +312,6 @@ export default function RestaurantDetail() {
         </div>
       </div>
 
-      {menuOpen && <MenuModal restaurant={restaurant} onClose={() => setMenuOpen(false)} />}
     </div>
   )
 }

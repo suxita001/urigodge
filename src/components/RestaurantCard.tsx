@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MapPin, ArrowUpRight, QrCode } from 'lucide-react'
+import { MapPin, ArrowUpRight } from 'lucide-react'
 import type { Restaurant } from '../data/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { categoryMap, neighborhoodMap } from '../data/categories'
-import { priceSymbol } from '../lib/format'
+import { priceSymbol, venueName } from '../lib/format'
 import FavoriteButton from './FavoriteButton'
+import { restaurantPath } from '../lib/site'
 
 export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: Restaurant; index?: number }) {
   const { t, tx, lang } = useLanguage()
@@ -18,13 +19,13 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
       transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
     >
       <Link
-        to={`/restaurant/${restaurant.slug}`}
+        to={restaurantPath(restaurant.slug)}
         className="group block bg-white rounded-2xl border border-border overflow-hidden shadow-card hover:shadow-card-hover transition-shadow duration-300 h-full"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-cream-2">
           <img
             src={restaurant.coverImage}
-            alt={restaurant.name}
+            alt={venueName(restaurant, lang)}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           />
@@ -34,18 +35,13 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
             </span>
           </div>
           <div className="absolute top-3 right-3 flex items-center gap-1.5">
-            {restaurant.qrEnabled && (
-              <span className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-green shadow-sm">
-                <QrCode size={14} />
-              </span>
-            )}
             <FavoriteButton restaurantId={restaurant.slug} />
           </div>
         </div>
 
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-[16.5px] text-ink leading-snug">{restaurant.name}</h3>
+            <h3 className="font-bold text-[16.5px] text-ink leading-snug">{venueName(restaurant, lang)}</h3>
             <span className="text-[13px] font-semibold text-ink-faint shrink-0 pt-0.5">{priceSymbol(restaurant.priceLevel)}</span>
           </div>
 

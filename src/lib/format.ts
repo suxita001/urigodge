@@ -1,4 +1,4 @@
-import type { PriceLevel } from '../data/types'
+import type { Lang, PriceLevel, Restaurant } from '../data/types'
 
 export function priceSymbol(level: PriceLevel): string {
   return '₾'.repeat(level)
@@ -18,4 +18,9 @@ export function priceLabel(level: PriceLevel, lang: 'ka' | 'en'): string {
     en: { 1: 'Budget', 2: 'Mid-range', 3: 'Premium' },
   }
   return labels[lang][level]
+}
+
+/** Venue name in the interface language, falling back to whichever name exists. */
+export function venueName(r: Pick<Restaurant, 'name' | 'nameI18n'>, lang: Lang): string {
+  return r.nameI18n?.[lang] || r.name
 }

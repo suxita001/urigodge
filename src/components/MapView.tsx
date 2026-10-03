@@ -68,7 +68,7 @@ export default function MapView({
   const mapRef = useRef(null)
 
   return (
-    <div className={`relative w-full h-full ${className}`}>
+    <div className={`relative isolate w-full h-full ${className}`}>
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={zoom}

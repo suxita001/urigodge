@@ -6,6 +6,8 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { searchRestaurants, type SearchResult } from '../lib/search'
 import { categoryMap } from '../data/categories'
+import { restaurantPath } from '../lib/site'
+import { venueName } from '../lib/format'
 
 interface SearchBarProps {
   large?: boolean
@@ -50,7 +52,7 @@ export default function SearchBar({ large = false, autoFocus = false, onNavigate
     updateQuery('')
     setFocused(false)
     onNavigate?.()
-    navigate(`/restaurant/${slug}`)
+    navigate(restaurantPath(slug))
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -123,7 +125,7 @@ export default function SearchBar({ large = false, autoFocus = false, onNavigate
                         loading="lazy"
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block font-semibold text-[14px] text-ink truncate">{res.restaurant.name}</span>
+                        <span className="block font-semibold text-[14px] text-ink truncate">{venueName(res.restaurant, lang)}</span>
                         <span className="block text-[12.5px] text-ink-faint truncate">
                           {categoryMap[res.restaurant.category]?.label[lang]}
                           {res.matchType === 'menu' && res.matchLabel ? ` · ${res.matchLabel}` : ''}

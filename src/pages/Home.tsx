@@ -8,10 +8,15 @@ import RestaurantGrid from '../components/RestaurantGrid'
 import { useLanguage } from '../i18n/LanguageContext'
 import { categories } from '../data/categories'
 import { useRestaurants } from '../hooks/useRestaurants'
+import { useSeo } from '../hooks/useSeo'
+import { availableDishes } from '../data/dishes'
+import { websiteJsonLd } from '../lib/seo'
 
 export default function Home() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const { restaurants, loading } = useRestaurants()
+  useSeo(t('seo_home_title'), t('seo_home_description'), { path: '/', jsonLd: websiteJsonLd() })
+  const popularDishes = useMemo(() => availableDishes(restaurants).slice(0, 14), [restaurants])
   const featured = useMemo(
     () => [...restaurants].sort((a, b) => b.popularity - a.popularity).slice(0, 6),
     [restaurants]
@@ -90,6 +95,25 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Browse by dish */}
+      {popularDishes.length > 0 && (
+        <section className="max-w-7xl mx-auto px-5 md:px-8 pb-4">
+          <h2 className="text-[13px] font-bold uppercase tracking-wide text-green text-center mb-4">{t('home_dishes_title')}</h2>
+          <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
+            {popularDishes.map(({ dish, count }) => (
+              <Link
+                key={dish.id}
+                to={`/restaurants?dish=${dish.id}`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-border text-[13.5px] font-semibold text-ink-soft hover:border-green hover:text-green transition-colors"
+              >
+                {dish.label[lang]}
+                <span className="text-[11.5px] text-ink-faint tabular-nums">{count}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* How it works */}
       <section className="max-w-7xl mx-auto px-5 md:px-8 py-14 md:py-20">

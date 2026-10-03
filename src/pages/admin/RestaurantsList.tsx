@@ -224,7 +224,7 @@ function Managers({ list }: { list?: { label: string; pending: boolean }[] }) {
 function Actions({ r, onManager, onDelete, mobile }: { r: Restaurant; onManager: () => void; onDelete: () => void; mobile?: boolean }) {
   const base = `/admin/restaurants/${r.id}`
   const items = [
-    { to: `/restaurant/${r.slug}`, icon: Eye, label: 'ნახვა', short: 'ნახვა', external: true },
+    { to: `/restaurants/${r.slug}`, icon: Eye, label: 'ნახვა', short: 'ნახვა', external: true },
     { to: `${base}?tab=info`, icon: Pencil, label: 'რედაქტირება', short: 'რედაქტ.' },
     { to: `${base}?tab=menu`, icon: UtensilsCrossed, label: 'მენიუს მართვა', short: 'მენიუ' },
     { to: `${base}?tab=branches`, icon: GitBranch, label: 'ფილიალები', short: 'ფილიალები' },

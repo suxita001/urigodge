@@ -1,49 +1,53 @@
 import type { CategoryId, CuisineId, NeighborhoodId, PriceLevel, Restaurant, Lang } from '../data/types'
 import { isOpenNow } from '../data/helpers'
+import { restaurantDishIds } from '../data/dishes'
 
 export type SortOption = 'recommended' | 'popular' | 'nearby' | 'az'
 
 export interface FilterState {
   category: CategoryId | null
-  cuisine: CuisineId | null
+  /** Any of the selected cuisines. */
+  cuisines: CuisineId[]
+  /** All of the selected dishes must be on the menu. */
+  dishes: string[]
   neighborhood: NeighborhoodId | null
   price: PriceLevel | null
   openNow: boolean
   hasMenu: boolean
-  hasQr: boolean
 }
 
 export const defaultFilters: FilterState = {
   category: null,
-  cuisine: null,
+  cuisines: [],
+  dishes: [],
   neighborhood: null,
   price: null,
   openNow: false,
   hasMenu: false,
-  hasQr: false,
 }
 
 export function countActiveFilters(f: FilterState): number {
-  let n = 0
+  let n = f.cuisines.length + f.dishes.length
   if (f.category) n++
-  if (f.cuisine) n++
   if (f.neighborhood) n++
   if (f.price) n++
   if (f.openNow) n++
   if (f.hasMenu) n++
-  if (f.hasQr) n++
   return n
 }
 
 export function applyFilters(restaurants: Restaurant[], filters: FilterState): Restaurant[] {
   return restaurants.filter((r) => {
     if (filters.category && r.category !== filters.category) return false
-    if (filters.cuisine && !r.cuisine.includes(filters.cuisine)) return false
+    if (filters.cuisines.length && !filters.cuisines.some((c) => r.cuisine.includes(c))) return false
+    if (filters.dishes.length) {
+      const served = restaurantDishIds(r)
+      if (!filters.dishes.every((d) => served.has(d))) return false
+    }
     if (filters.neighborhood && r.neighborhood !== filters.neighborhood) return false
     if (filters.price && r.priceLevel !== filters.price) return false
     if (filters.openNow && !isOpenNow(r.openingHours)) return false
     if (filters.hasMenu && r.menu.length === 0) return false
-    if (filters.hasQr && !r.qrEnabled) return false
     return true
   })
 }
@@ -51,13 +55,12 @@ export function applyFilters(restaurants: Restaurant[], filters: FilterState): R
 export function sortRestaurants(restaurants: Restaurant[], sort: SortOption, lang: Lang): Restaurant[] {
   const arr = [...restaurants]
   switch (sort) {
-    case 'popular':
-      return arr.sort((a, b) => b.popularity - a.popularity)
     case 'az':
       return arr.sort((a, b) => a.name.localeCompare(b.name, lang === 'ka' ? 'ka' : 'en'))
     case 'nearby':
-      // No real geolocation in MVP — approximate by distance from Freedom Square (city center)
+      // No real geolocation yet — approximate by distance from Freedom Square (city center)
       return arr.sort((a, b) => distFromCenter(a) - distFromCenter(b))
+    case 'popular':
     case 'recommended':
     default:
       return arr.sort((a, b) => b.popularity - a.popularity)

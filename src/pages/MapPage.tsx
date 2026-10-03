@@ -6,6 +6,7 @@ import SearchBar from '../components/SearchBar'
 import CategoryPill from '../components/CategoryPill'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
+import { useSeo } from '../hooks/useSeo'
 import Spinner from '../components/ui/Spinner'
 import { categories } from '../data/categories'
 import type { Restaurant, CategoryId } from '../data/types'
@@ -17,19 +18,20 @@ export default function MapPage() {
   const [selected, setSelected] = useState<Restaurant | null>(null)
   const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null)
   const [query, setQuery] = useState('')
+  useSeo(`${t('seo_map_title')} | urigod.ge`, t('seo_map_description'), { path: '/map' })
 
   const filtered = useMemo(() => {
     let list = restaurants
     if (query.trim()) {
-      const matched = searchRestaurants(restaurants, query, lang).map((r) => r.restaurant.id)
-      list = list.filter((r) => matched.includes(r.id))
+      const matched = new Set(searchRestaurants(restaurants, query, lang).map((r) => r.restaurant.id))
+      list = list.filter((r) => matched.has(r.id))
     }
     if (activeCategory) list = list.filter((r) => r.category === activeCategory)
     return list
   }, [restaurants, activeCategory, query, lang])
 
   return (
-    <div className="relative h-[calc(100vh-64px)] md:h-[calc(100vh-72px)] w-full overflow-hidden">
+    <div className="relative isolate h-[calc(100dvh-64px)] md:h-[calc(100dvh-72px)] w-full overflow-hidden">
       <MapView
         restaurants={filtered}
         selectedId={selected?.id}

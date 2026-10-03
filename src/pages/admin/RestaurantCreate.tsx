@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, Info, Phone, MapPin, Clock3, Images, Uten
 import { dailyHours } from '../../data/helpers'
 import { createRestaurant, restaurantExists, slugify } from '../../services/restaurantService'
 import { newId } from '../../services/menuService'
+import { aiPriceLevel } from '../../services/aiService'
 import { useSeo } from '../../hooks/useSeo'
 import { useToast } from '../../hooks/useToast'
 import { getFirebaseErrorMessage, SAVE_FAILED } from '../../utils/firebaseErrors'
@@ -57,7 +58,7 @@ function emptyDraft(): Draft {
     branches: [],
     menu: [],
     features: [],
-    qrEnabled: true,
+    qrEnabled: false,
     popularity: 0,
     status: 'published',
   }
@@ -125,6 +126,9 @@ export default function RestaurantCreate() {
             isMain: true,
           },
         ]
+      }
+      if (clean.menu.some((c) => c.items.some((i) => i.price > 0))) {
+        clean.priceLevel = await aiPriceLevel({ name: clean.name.ka || clean.name.en, category: clean.category, cuisine: clean.cuisine, menu: clean.menu }, clean.priceLevel)
       }
       const id = await createRestaurant(clean)
       toast.success('რესტორანი წარმატებით დაემატა.')
@@ -197,7 +201,7 @@ export default function RestaurantCreate() {
                 <BasicInfoFields draft={draft} set={set} errors={errors} />
                 <TextInput
                   label="URL (slug)"
-                  hint={`urigod.ge/restaurant/${slug || '...'}`}
+                  hint={`urigod.ge/restaurants/${slug || '...'}`}
                   value={slug}
                   onValueChange={(v) => {
                     setSlugTouched(true)
