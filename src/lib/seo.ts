@@ -23,6 +23,13 @@ const SCHEMA_TYPE: Partial<Record<Restaurant['category'], string>> = {
   burger: 'FastFoodRestaurant',
 }
 
+/** Name for <title>: the interface language first, the other spelling in brackets ("სახლი №11 (Sakhli No. 11)"). */
+export function seoName(r: Restaurant, lang: Lang): string {
+  const primary = r.nameI18n[lang] || r.name
+  const other = r.nameI18n[lang === 'ka' ? 'en' : 'ka']
+  return other && other !== primary ? `${primary} (${other})` : primary
+}
+
 export function websiteJsonLd(): JsonLd[] {
   return [
     {

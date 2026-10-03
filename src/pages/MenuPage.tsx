@@ -7,7 +7,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { useSeo } from '../hooks/useSeo'
 import { isOpenNow } from '../data/helpers'
 import { categoryMap, neighborhoodMap } from '../data/categories'
-import { breadcrumbJsonLd, menuJsonLd } from '../lib/seo'
+import { breadcrumbJsonLd, menuJsonLd, seoName } from '../lib/seo'
 import { menuPath, restaurantPath } from '../lib/site'
 import { venueName } from '../lib/format'
 import type { MenuCategoryData, MenuItem } from '../data/types'
@@ -132,7 +132,7 @@ export default function MenuPage() {
   const itemCount = restaurant?.menu.reduce((n, c) => n + c.items.length, 0) ?? 0
 
   useSeo(
-    restaurant ? `${name} — ${t('seo_menu_title')} | urigod.ge` : 'urigod.ge',
+    restaurant ? `${seoName(restaurant, lang)} — ${t('seo_menu_title')} | urigod.ge` : 'urigod.ge',
     restaurant ? t('seo_menu_description', { name, count: itemCount }) : undefined,
     restaurant
       ? {

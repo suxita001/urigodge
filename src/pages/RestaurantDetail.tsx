@@ -21,7 +21,7 @@ import { useSeo } from '../hooks/useSeo'
 import RestaurantGallery from '../components/RestaurantGallery'
 import BranchCard from '../components/BranchCard'
 import MapView from '../components/MapView'
-import { breadcrumbJsonLd, restaurantJsonLd } from '../lib/seo'
+import { breadcrumbJsonLd, restaurantJsonLd, seoName } from '../lib/seo'
 import { menuPath, restaurantPath } from '../lib/site'
 import type { Coordinates } from '../data/types'
 
@@ -72,7 +72,7 @@ export default function RestaurantDetail() {
   const name = restaurant ? venueName(restaurant, lang) : ''
 
   useSeo(
-    restaurant ? `${name} — ${t('seo_restaurant_title')} | urigod.ge` : 'urigod.ge',
+    restaurant ? `${seoName(restaurant, lang)} — ${t('seo_restaurant_title')} | urigod.ge` : 'urigod.ge',
     restaurant ? `${tx(restaurant.shortDescription)} ${tx(restaurant.address)}`.trim() : undefined,
     restaurant
       ? {

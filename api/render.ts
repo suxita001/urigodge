@@ -34,8 +34,9 @@ const oneLine = (s: string, max: number) => {
 }
 
 function displayName(r: ApiRestaurant): string {
-  const primary = r.name.en || r.name.ka || r.slug
-  return r.name.ka && r.name.ka !== primary ? `${primary} (${r.name.ka})` : primary
+  // Georgian first (the site's main audience searches in Georgian), Latin spelling in brackets.
+  const primary = r.name.ka || r.name.en || r.slug
+  return r.name.en && r.name.en !== primary ? `${primary} (${r.name.en})` : primary
 }
 
 function restaurantJsonLd(r: ApiRestaurant, url: string) {
