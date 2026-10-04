@@ -130,6 +130,12 @@ export default function Register() {
           {status === 'loading' && <Spinner size={17} />}
           {t('auth_register_btn')}
         </button>
+        <p className="text-center text-[12.5px] text-ink-faint leading-relaxed">
+          {t('auth_terms_prefix')}{' '}
+          <Link to="/terms" target="_blank" className="font-semibold text-ink-soft underline hover:text-green">
+            {t('auth_terms_link')}
+          </Link>
+        </p>
       </form>
     </AuthLayout>
   )

@@ -18,6 +18,7 @@ import About from './pages/About'
 const MapPage = lazy(() => import('./pages/MapPage'))
 const RestaurantDetail = lazy(() => import('./pages/RestaurantDetail'))
 const MenuPage = lazy(() => import('./pages/MenuPage'))
+const Terms = lazy(() => import('./pages/Terms'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
@@ -96,6 +97,7 @@ export default function App() {
                       <Route path="/restaurants" element={<Restaurants />} />
                       <Route path="/map" element={<MapPage />} />
                       <Route path="/about" element={<About />} />
+                      <Route path="/terms" element={<Terms />} />
                       <Route path="/restaurants/:slug" element={<RestaurantDetail />} />
                       <Route path="/restaurants/:slug/menu" element={<MenuPage />} />
                       <Route path="/restaurant/:slug" element={<LegacyRestaurantRedirect />} />

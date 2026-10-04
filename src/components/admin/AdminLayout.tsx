@@ -65,13 +65,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col h-full">
       <div className="px-5 h-16 md:h-[72px] flex items-center border-b border-white/10">
         <Link to="/" className="flex items-center gap-2.5" onClick={onNavigate}>
-          <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-            <rect width="64" height="64" rx="16" fill="#3A5A40" />
-            <path d="M20 16v16.5c0 3.6 2.9 6.5 6.5 6.5S33 36.1 33 32.5V16" stroke="#FAF7F1" strokeWidth="3.4" strokeLinecap="round" />
-            <path d="M20 24h13" stroke="#FAF7F1" strokeWidth="3.4" strokeLinecap="round" />
-            <path d="M44 16v11c0 3-2 5-4.5 5.6V48" stroke="#FAF7F1" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M39.5 16v13" stroke="#FAF7F1" strokeWidth="3.4" strokeLinecap="round" />
-          </svg>
+          <img src={`${import.meta.env.BASE_URL}logo-light.png`} alt="" width={30} height={30} className="w-[30px] h-[30px]" />
           <span className="text-[18px] font-extrabold tracking-tight text-cream">
             urigod<span className="text-[#9cc5a1]">.ge</span>
           </span>

@@ -6,6 +6,7 @@ const STATIC_PAGES = [
   { path: '/restaurants', priority: '0.9', changefreq: 'daily' },
   { path: '/map', priority: '0.7', changefreq: 'weekly' },
   { path: '/about', priority: '0.4', changefreq: 'monthly' },
+  { path: '/terms', priority: '0.2', changefreq: 'yearly' },
 ]
 
 const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

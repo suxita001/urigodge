@@ -38,6 +38,7 @@ export default function Footer() {
               <li><Link to="/map" className="text-[14.5px] text-ink-soft hover:text-green transition-colors">{t('nav_map')}</Link></li>
               <li><Link to="/restaurants" className="text-[14.5px] text-ink-soft hover:text-green transition-colors">{t('nav_restaurants')}</Link></li>
               <li><Link to="/about" className="text-[14.5px] text-ink-soft hover:text-green transition-colors">{t('nav_about')}</Link></li>
+              <li><Link to="/terms" className="text-[14.5px] text-ink-soft hover:text-green transition-colors">{t('terms_title')}</Link></li>
             </ul>
           </div>
 
@@ -52,6 +53,9 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[13px] text-ink-faint">© {new Date().getFullYear()} urigod.ge — {t('footer_rights')}</p>
+          <Link to="/terms" className="text-[13px] font-semibold text-ink-soft hover:text-green transition-colors">
+            {t('terms_title')}
+          </Link>
         </div>
       </div>
     </footer>
