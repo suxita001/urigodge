@@ -215,6 +215,10 @@ export const translations = {
     terms_contents: 'შინაარსი',
     auth_terms_prefix: 'რეგისტრაციით ეთანხმები',
     auth_terms_link: 'წესებსა და პირობებს',
+    map_locate: 'ჩემი მდებარეობა',
+    map_locate_denied: 'მდებარეობაზე წვდომა გამორთულია. ჩართე ბრაუზერის პარამეტრებში და სცადე ხელახლა.',
+    map_locate_failed: 'მდებარეობის დადგენა ვერ მოხერხდა. სცადე ხელახლა.',
+    map_locate_unsupported: 'ეს ბრაუზერი მდებარეობის დადგენას არ უჭერს მხარს.',
   },
   en: {
     nav_home: 'Home',
@@ -432,6 +436,10 @@ export const translations = {
     terms_contents: 'Contents',
     auth_terms_prefix: 'By registering you agree to the',
     auth_terms_link: 'Terms and Conditions',
+    map_locate: 'My location',
+    map_locate_denied: 'Location access is turned off. Enable it in your browser settings and try again.',
+    map_locate_failed: "Couldn't determine your location. Try again.",
+    map_locate_unsupported: "This browser doesn't support location.",
   },
 } as const
 

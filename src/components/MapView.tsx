@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import type { Restaurant, Coordinates } from '../data/types'
@@ -32,6 +32,18 @@ function clusterIcon(count: number) {
   })
 }
 
+export interface UserLocation extends Coordinates {
+  /** Radius of uncertainty reported by the device, in metres. */
+  accuracy: number
+}
+
+const userIcon = L.divIcon({
+  className: 'urigod-user',
+  html: '<span class="urigod-user-pulse"></span><span class="urigod-user-dot"></span>',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+})
+
 function FlyToController({ target, zoom }: { target?: Coordinates; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
@@ -48,6 +60,7 @@ interface MapViewProps {
   onSelect: (r: Restaurant) => void
   focusTarget?: Coordinates
   focusZoom?: number
+  userLocation?: UserLocation | null
   center?: Coordinates
   zoom?: number
   className?: string
@@ -61,6 +74,7 @@ export default function MapView({
   onSelect,
   focusTarget,
   focusZoom,
+  userLocation,
   center = TBILISI_CENTER,
   zoom = 13,
   className = '',
@@ -82,6 +96,19 @@ export default function MapView({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FlyToController target={focusTarget} zoom={focusZoom} />
+        {userLocation && (
+          <>
+            {userLocation.accuracy > 25 && userLocation.accuracy < 3000 && (
+              <Circle
+                center={[userLocation.lat, userLocation.lng]}
+                radius={userLocation.accuracy}
+                interactive={false}
+                pathOptions={{ color: '#2f6fed', weight: 1, opacity: 0.45, fillColor: '#2f6fed', fillOpacity: 0.1 }}
+              />
+            )}
+            <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} interactive={false} keyboard={false} zIndexOffset={1000} />
+          </>
+        )}
         <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={(cluster: { getChildCount: () => number }) => clusterIcon(cluster.getChildCount())}

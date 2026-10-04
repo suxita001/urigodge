@@ -1,15 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { LocateFixed } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import MapView from '../components/MapView'
+import MapView, { type UserLocation } from '../components/MapView'
 import MapPreviewCard from '../components/MapPreviewCard'
 import SearchBar from '../components/SearchBar'
 import CategoryPill from '../components/CategoryPill'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { useSeo } from '../hooks/useSeo'
+import { useToast } from '../hooks/useToast'
 import Spinner from '../components/ui/Spinner'
 import { categories } from '../data/categories'
-import type { Restaurant, CategoryId } from '../data/types'
+import type { Restaurant, CategoryId, Coordinates } from '../data/types'
 import { searchRestaurants } from '../lib/search'
 
 export default function MapPage() {
@@ -18,6 +20,57 @@ export default function MapPage() {
   const [selected, setSelected] = useState<Restaurant | null>(null)
   const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null)
   const [query, setQuery] = useState('')
+  const toast = useToast()
+  // What the map should fly to: a tapped restaurant or the visitor's own position.
+  const [focus, setFocus] = useState<Coordinates | undefined>(undefined)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
+  const [locating, setLocating] = useState(false)
+  const watchId = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current)
+    },
+    []
+  )
+
+  function select(r: Restaurant) {
+    setSelected(r)
+    setFocus(r.coordinates)
+  }
+
+  function locate() {
+    // Already tracking: just bring the map back to the visitor.
+    if (userLocation) {
+      setFocus({ lat: userLocation.lat, lng: userLocation.lng })
+      return
+    }
+    if (!('geolocation' in navigator)) {
+      toast.error(t('map_locate_unsupported'))
+      return
+    }
+    setLocating(true)
+    let first = true
+    watchId.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }
+        setUserLocation(here)
+        if (first) {
+          first = false
+          setLocating(false)
+          setFocus({ lat: here.lat, lng: here.lng })
+        }
+      },
+      (err) => {
+        setLocating(false)
+        if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current)
+        watchId.current = null
+        // Keep the dot if we already had a fix and only a later update failed.
+        if (first) toast.error(t(err.code === err.PERMISSION_DENIED ? 'map_locate_denied' : 'map_locate_failed'))
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    )
+  }
   useSeo(`${t('seo_map_title')} | urigod.ge`, t('seo_map_description'), { path: '/map' })
 
   const filtered = useMemo(() => {
@@ -35,9 +88,23 @@ export default function MapPage() {
       <MapView
         restaurants={filtered}
         selectedId={selected?.id}
-        onSelect={setSelected}
-        focusTarget={selected?.coordinates}
+        onSelect={select}
+        focusTarget={focus}
+        userLocation={userLocation}
       />
+
+      <button
+        type="button"
+        onClick={locate}
+        disabled={locating}
+        aria-label={t('map_locate')}
+        title={t('map_locate')}
+        className={`absolute z-[400] right-4 top-[136px] md:top-auto md:bottom-24 md:right-6 w-12 h-12 rounded-full bg-white shadow-card-hover border border-border flex items-center justify-center transition-colors hover:bg-cream-2 ${
+          userLocation ? 'text-[#2f6fed]' : 'text-ink'
+        }`}
+      >
+        {locating ? <Spinner size={18} className="text-green" /> : <LocateFixed size={21} />}
+      </button>
 
       {/* Top overlay: search + category filters */}
       <div className="absolute top-0 left-0 right-0 z-[400] pointer-events-none">
@@ -89,14 +156,14 @@ export default function MapPage() {
       </AnimatePresence>
 
       {loading ? (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 z-[400] flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-[400] flex items-center gap-2 bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft">
           <Spinner size={14} className="text-green" />
           {t('loading')}
         </div>
       ) : (
         !selected &&
         query === '' && (
-          <div className="hidden md:flex absolute bottom-6 right-6 z-[400] items-center gap-2 bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft">
+          <div className="hidden md:flex absolute bottom-6 left-6 z-[400] items-center gap-2 bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft">
             {t('results_count', { count: filtered.length })}
           </div>
         )
