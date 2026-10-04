@@ -1,4 +1,5 @@
-import { getRestaurant, type ApiRestaurant } from './_lib/firestore.js'
+import { getRestaurant, listRestaurants, type ApiRestaurant } from './_lib/firestore.js'
+import { landingCopy, landingPath, matchesLanding, type LandingKind } from '../shared/taxonomy.js'
 import { SITE_URL, requestHost, type ApiRequest, type ApiResponse } from './_lib/http.js'
 
 // Restaurant pages (/restaurants/:slug and /restaurants/:slug/menu) are routed here by vercel.json.
@@ -137,7 +138,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
   const slug = param('slug')
   const isMenu = param('menu') === '1'
-  const path = `/restaurants/${encodeURIComponent(slug)}${isMenu ? '/menu' : ''}`
+  const kind = param('kind') as LandingKind | ''
+  const isLanding = kind === 'dish' || kind === 'cuisine' || kind === 'area'
+  const path = isLanding ? landingPath(kind, param('a'), param('b') || undefined) : `/restaurants/${encodeURIComponent(slug)}${isMenu ? '/menu' : ''}`
 
   const html = await loadTemplate(requestHost(req) || 'www.urigod.ge')
   if (!html) {
@@ -148,6 +151,39 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
   try {
+    if (isLanding) {
+      const a = param('a')
+      const b = param('b') || undefined
+      const matches = (await listRestaurants()).filter((r) => matchesLanding(r, kind, a, b)).sort((x, y) => y.popularity - x.popularity)
+      const copy = landingCopy(kind, a, b, 'ka', matches.length)
+      if (!copy) {
+        res.setHeader('Cache-Control', 'public, s-maxage=60').status(404).send(html.replace('</head>', '    <meta name="robots" content="noindex, follow" />\n  </head>'))
+        return
+      }
+      const url = `${SITE_URL}${path}`
+      const meta: PageMeta = {
+        title: copy.title,
+        description: copy.description,
+        url,
+        image: matches[0]?.coverImage,
+        noindex: matches.length === 0,
+        jsonLd: [
+          breadcrumbJsonLd([{ name: 'რესტორნები', url: `${SITE_URL}/restaurants` }, { name: copy.heading, url }]),
+          ...(matches.length
+            ? [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'ItemList',
+                  name: copy.heading,
+                  itemListElement: matches.slice(0, 30).map((r, i) => ({ '@type': 'ListItem', position: i + 1, name: r.name.ka || r.name.en, url: `${SITE_URL}/restaurants/${encodeURIComponent(r.slug)}` })),
+                },
+              ]
+            : []),
+        ],
+      }
+      res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400').status(200).send(inject(html, meta))
+      return
+    }
     const r = slug ? await getRestaurant(slug) : null
     if (!r) {
       // Unknown or unpublished: plain shell (the app redirects to the list), kept out of the index.

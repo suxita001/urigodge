@@ -40,6 +40,7 @@ export interface ApiRestaurant {
   coordinates: { lat: number; lng: number }
   openingHours: Record<string, DayHours | undefined>
   menu: { name: Localized; items: ApiMenuItem[] }[]
+  popularity: number
   updatedAt?: string
 }
 
@@ -106,6 +107,7 @@ function toRestaurant(id: string, raw: Record<string, unknown>, updateTime?: str
         available: i.available !== false,
       })),
     })),
+    popularity: Number(raw.popularity) || 0,
     updatedAt: updateTime,
   }
 }

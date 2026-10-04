@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import { RestaurantsProvider } from './context/RestaurantsContext'
 import { FavoritesProvider } from './context/FavoritesContext'
+import { LocationProvider } from './context/LocationContext'
 import { RequireAuth, RequireRole } from './components/RouteGuards'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -19,6 +20,7 @@ const MapPage = lazy(() => import('./pages/MapPage'))
 const RestaurantDetail = lazy(() => import('./pages/RestaurantDetail'))
 const MenuPage = lazy(() => import('./pages/MenuPage'))
 const Terms = lazy(() => import('./pages/Terms'))
+const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
@@ -34,6 +36,24 @@ const Managers = lazy(() => import('./pages/admin/Managers'))
 const Admins = lazy(() => import('./pages/admin/Admins'))
 const Logs = lazy(() => import('./pages/admin/Logs'))
 const Settings = lazy(() => import('./pages/admin/Settings'))
+
+// The map and restaurant pages are separate chunks; fetching them once the browser is idle makes
+// the first click on them feel instant.
+function usePrefetchPages() {
+  useEffect(() => {
+    const run = () => {
+      void import('./pages/RestaurantDetail')
+      void import('./pages/MenuPage')
+      void import('./pages/MapPage')
+    }
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(run, { timeout: 4000 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const timer = setTimeout(run, 2500)
+    return () => clearTimeout(timer)
+  }, [])
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -65,6 +85,7 @@ function PageFallback() {
 
 function PublicLayout() {
   const { pathname } = useLocation()
+  usePrefetchPages()
   return (
     <div className="min-h-screen flex flex-col bg-cream">
       <Navbar />
@@ -89,6 +110,7 @@ export default function App() {
           <RestaurantsProvider>
             <BrowserRouter basename={import.meta.env.BASE_URL}>
               <FavoritesProvider>
+               <LocationProvider>
                 <ScrollToTop />
                 <Suspense fallback={<PageFallback />}>
                   <Routes>
@@ -98,6 +120,11 @@ export default function App() {
                       <Route path="/map" element={<MapPage />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/terms" element={<Terms />} />
+                      <Route path="/dishes/:id" element={<Landing kind="dish" />} />
+                      <Route path="/dishes/:id/:area" element={<Landing kind="dish" />} />
+                      <Route path="/cuisines/:id" element={<Landing kind="cuisine" />} />
+                      <Route path="/cuisines/:id/:area" element={<Landing kind="cuisine" />} />
+                      <Route path="/areas/:id" element={<Landing kind="area" />} />
                       <Route path="/restaurants/:slug" element={<RestaurantDetail />} />
                       <Route path="/restaurants/:slug/menu" element={<MenuPage />} />
                       <Route path="/restaurant/:slug" element={<LegacyRestaurantRedirect />} />
@@ -142,6 +169,7 @@ export default function App() {
                     <Route path="/dashboard/*" element={<Navigate to="/admin" replace />} />
                   </Routes>
                 </Suspense>
+               </LocationProvider>
               </FavoritesProvider>
             </BrowserRouter>
           </RestaurantsProvider>

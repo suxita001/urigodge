@@ -10,6 +10,7 @@ import { categoryMap, neighborhoodMap } from '../data/categories'
 import { breadcrumbJsonLd, menuJsonLd, seoName } from '../lib/seo'
 import { menuPath, restaurantPath } from '../lib/site'
 import { venueName } from '../lib/format'
+import { sized, srcSet } from '../lib/image'
 import type { MenuCategoryData, MenuItem } from '../data/types'
 
 const formatPrice = (price: number) => (Number.isInteger(price) ? String(price) : price.toFixed(2))
@@ -56,9 +57,13 @@ function ItemCard({ item, onOpen }: { item: MenuItem; onOpen: () => void }) {
         </span>
         {item.image && (
           <img
-            src={item.image}
+            src={sized(item.image, 112, 112)}
+            srcSet={srcSet(item.image, 112, 112)}
             alt={tx(item.name)}
+            width={112}
+            height={112}
             loading="lazy"
+            decoding="async"
             className={`w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover shrink-0 bg-cream-2 transition-transform duration-300 group-hover:scale-[1.03] ${unavailable ? 'grayscale' : ''}`}
           />
         )}
@@ -95,7 +100,7 @@ function ItemSheet({ item, onClose }: { item: MenuItem; onClose: () => void }) {
         <button type="button" onClick={onClose} aria-label={t('close_modal')} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/95 shadow-sm flex items-center justify-center text-ink">
           <X size={18} />
         </button>
-        {item.image && <img src={item.image} alt={tx(item.name)} className="w-full aspect-[4/3] object-cover bg-cream-2" />}
+        {item.image && <img src={sized(item.image, 900, 675)} alt={tx(item.name)} className="w-full aspect-[4/3] object-cover bg-cream-2" />}
         <div className={`p-5 sm:p-6 overflow-y-auto ${item.image ? '' : 'pt-12'}`}>
           <h3 className="text-[20px] font-extrabold text-ink leading-snug">{tx(item.name)}</h3>
           {tx(item.description) && <p className="mt-2 text-[14.5px] text-ink-soft leading-relaxed">{tx(item.description)}</p>}
@@ -210,7 +215,7 @@ export default function MenuPage() {
 
         <div className="mt-4 flex items-center gap-4">
           {(restaurant.logo || restaurant.coverImage) && (
-            <img src={restaurant.logo || restaurant.coverImage} alt="" className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shrink-0 bg-cream-2 border border-border" />
+            <img src={sized(restaurant.logo || restaurant.coverImage, 160, 160)} alt="" className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shrink-0 bg-cream-2 border border-border" />
           )}
           <div className="min-w-0">
             <h1 className="text-[24px] md:text-[34px] font-extrabold text-ink tracking-tight leading-tight">

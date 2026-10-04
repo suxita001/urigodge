@@ -1,76 +1,32 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { LocateFixed } from 'lucide-react'
+import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import MapView, { type UserLocation } from '../components/MapView'
+import { LocateFixed } from 'lucide-react'
+import MapView from '../components/MapView'
 import MapPreviewCard from '../components/MapPreviewCard'
 import SearchBar from '../components/SearchBar'
 import CategoryPill from '../components/CategoryPill'
+import FilterBar from '../components/FilterBar'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { useSeo } from '../hooks/useSeo'
 import { useToast } from '../hooks/useToast'
+import { useUserLocation } from '../context/LocationContext'
 import Spinner from '../components/ui/Spinner'
 import { categories } from '../data/categories'
-import type { Restaurant, CategoryId, Coordinates } from '../data/types'
+import type { Restaurant, Coordinates } from '../data/types'
 import { searchRestaurants } from '../lib/search'
+import { applyFilters, defaultFilters, type FilterState } from '../lib/filters'
 
 export default function MapPage() {
   const { t, lang } = useLanguage()
   const { restaurants, loading } = useRestaurants()
   const [selected, setSelected] = useState<Restaurant | null>(null)
-  const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null)
+  const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [query, setQuery] = useState('')
   const toast = useToast()
+  const { location, locating, locate } = useUserLocation()
   // What the map should fly to: a tapped restaurant or the visitor's own position.
   const [focus, setFocus] = useState<Coordinates | undefined>(undefined)
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
-  const [locating, setLocating] = useState(false)
-  const watchId = useRef<number | null>(null)
-
-  useEffect(
-    () => () => {
-      if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current)
-    },
-    []
-  )
-
-  function select(r: Restaurant) {
-    setSelected(r)
-    setFocus(r.coordinates)
-  }
-
-  function locate() {
-    // Already tracking: just bring the map back to the visitor.
-    if (userLocation) {
-      setFocus({ lat: userLocation.lat, lng: userLocation.lng })
-      return
-    }
-    if (!('geolocation' in navigator)) {
-      toast.error(t('map_locate_unsupported'))
-      return
-    }
-    setLocating(true)
-    let first = true
-    watchId.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }
-        setUserLocation(here)
-        if (first) {
-          first = false
-          setLocating(false)
-          setFocus({ lat: here.lat, lng: here.lng })
-        }
-      },
-      (err) => {
-        setLocating(false)
-        if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current)
-        watchId.current = null
-        // Keep the dot if we already had a fix and only a later update failed.
-        if (first) toast.error(t(err.code === err.PERMISSION_DENIED ? 'map_locate_denied' : 'map_locate_failed'))
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
-    )
-  }
   useSeo(`${t('seo_map_title')} | urigod.ge`, t('seo_map_description'), { path: '/map' })
 
   const filtered = useMemo(() => {
@@ -79,46 +35,55 @@ export default function MapPage() {
       const matched = new Set(searchRestaurants(restaurants, query, lang).map((r) => r.restaurant.id))
       list = list.filter((r) => matched.has(r.id))
     }
-    if (activeCategory) list = list.filter((r) => r.category === activeCategory)
-    return list
-  }, [restaurants, activeCategory, query, lang])
+    return applyFilters(list, filters)
+  }, [restaurants, filters, query, lang])
+
+  function select(r: Restaurant) {
+    setSelected(r)
+    setFocus(r.coordinates)
+  }
+
+  async function goToMe() {
+    const result = await locate()
+    if (typeof result === 'string') {
+      toast.error(t(result === 'denied' ? 'map_locate_denied' : result === 'unsupported' ? 'map_locate_unsupported' : 'map_locate_failed'))
+      return
+    }
+    // A fresh object every time, so pressing the button again flies back even if the position is unchanged.
+    setFocus({ lat: result.lat, lng: result.lng })
+  }
 
   return (
     <div className="relative isolate h-[calc(100dvh-64px)] md:h-[calc(100dvh-72px)] w-full overflow-hidden">
-      <MapView
-        restaurants={filtered}
-        selectedId={selected?.id}
-        onSelect={select}
-        focusTarget={focus}
-        userLocation={userLocation}
-      />
+      <MapView restaurants={filtered} selectedId={selected?.id} onSelect={select} focusTarget={focus} userLocation={location} />
 
       <button
         type="button"
-        onClick={locate}
+        onClick={goToMe}
         disabled={locating}
         aria-label={t('map_locate')}
         title={t('map_locate')}
         className={`absolute z-[400] right-4 top-[136px] md:top-auto md:bottom-24 md:right-6 w-12 h-12 rounded-full bg-white shadow-card-hover border border-border flex items-center justify-center transition-colors hover:bg-cream-2 ${
-          userLocation ? 'text-[#2f6fed]' : 'text-ink'
+          location ? 'text-[#2f6fed]' : 'text-ink'
         }`}
       >
         {locating ? <Spinner size={18} className="text-green" /> : <LocateFixed size={21} />}
       </button>
 
-      {/* Top overlay: search + category filters */}
+      {/* Top overlay: search, full filters and quick category pills */}
       <div className="absolute top-0 left-0 right-0 z-[400] pointer-events-none">
         <div className="max-w-3xl mx-auto px-4 pt-4 flex flex-col gap-3">
           <div className="pointer-events-auto">
             <SearchBar large showDropdown={false} onQueryChange={setQuery} />
           </div>
-          <div className="pointer-events-auto flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 pt-2 -mt-2">
+            <FilterBar compact filters={filters} onChange={setFilters} resultCount={filtered.length} />
             {categories.map((c) => (
               <CategoryPill
                 key={c.id}
                 category={c}
-                active={activeCategory === c.id}
-                onClick={() => setActiveCategory((cur) => (cur === c.id ? null : c.id))}
+                active={filters.category === c.id}
+                onClick={() => setFilters((f) => ({ ...f, category: f.category === c.id ? null : c.id }))}
               />
             ))}
           </div>
@@ -161,14 +126,12 @@ export default function MapPage() {
           {t('loading')}
         </div>
       ) : (
-        !selected &&
-        query === '' && (
-          <div className="hidden md:flex absolute bottom-6 left-6 z-[400] items-center gap-2 bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft">
+        !selected && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-[400] bg-white/95 backdrop-blur px-4 py-2.5 rounded-full shadow-card text-[13px] font-semibold text-ink-soft whitespace-nowrap">
             {t('results_count', { count: filtered.length })}
           </div>
         )
       )}
-
     </div>
   )
 }

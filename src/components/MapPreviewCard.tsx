@@ -5,14 +5,19 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { categoryMap } from '../data/categories'
 import { priceSymbol, venueName } from '../lib/format'
 import { restaurantPath } from '../lib/site'
+import { sized } from '../lib/image'
+import { formatDistance } from '../lib/geo'
+import { nearestBranch } from '../lib/filters'
+import { useUserLocation } from '../context/LocationContext'
 
 export default function MapPreviewCard({ restaurant, onClose }: { restaurant: Restaurant; onClose: () => void }) {
   const { t, tx, lang } = useLanguage()
+  const { location } = useUserLocation()
 
   return (
     <div className="bg-white rounded-2xl md:rounded-2xl shadow-card-hover overflow-hidden w-full">
       <div className="relative">
-        <img src={restaurant.coverImage} alt={venueName(restaurant, lang)} className="w-full h-36 md:h-32 object-cover" />
+        <img src={sized(restaurant.coverImage, 720, 300)} alt={venueName(restaurant, lang)} className="w-full h-36 md:h-32 object-cover bg-cream-2" />
         <button
           onClick={onClose}
           className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-ink shadow-sm"
@@ -31,7 +36,10 @@ export default function MapPreviewCard({ restaurant, onClose }: { restaurant: Re
         </div>
         <p className="mt-1.5 flex items-start gap-1.5 text-[13px] text-ink-soft leading-relaxed">
           <MapPin size={13} className="mt-0.5 shrink-0" />
-          {tx(restaurant.address)}
+          <span>
+            {tx(restaurant.address)}
+            {location && <span className="font-semibold text-ink"> · {formatDistance(nearestBranch(restaurant, location), lang)}</span>}
+          </span>
         </p>
         <Link
           to={restaurantPath(restaurant.slug)}

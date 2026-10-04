@@ -12,9 +12,11 @@ import type { CuisineId } from '../data/types'
 interface FilterBarProps {
   filters: FilterState
   onChange: (filters: FilterState) => void
-  sort: SortOption
-  onSortChange: (sort: SortOption) => void
+  sort?: SortOption
+  onSortChange?: (sort: SortOption) => void
   resultCount: number
+  /** Just the "Filters" button, at every screen size; the panel opens as a sheet / dialog. Used on the map. */
+  compact?: boolean
 }
 
 interface Option {
@@ -250,7 +252,7 @@ function SortSelect({ sort, onSortChange, className = '' }: { sort: SortOption; 
   )
 }
 
-export default function FilterBar({ filters, onChange, sort, onSortChange, resultCount }: FilterBarProps) {
+export default function FilterBar({ filters, onChange, sort = 'recommended', onSortChange = () => {}, resultCount, compact = false }: FilterBarProps) {
   const { t, lang } = useLanguage()
   const { cuisineOptions, dishOptions } = useFilterOptions()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -273,9 +275,9 @@ export default function FilterBar({ filters, onChange, sort, onSortChange, resul
   const toggleIn = (list: string[], value: string) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
 
   return (
-    <div>
+    <div className={compact ? 'shrink-0' : ''}>
       {/* Desktop inline bar */}
-      <div className="hidden md:flex flex-wrap items-center gap-2.5">
+      <div className={compact ? 'hidden' : 'hidden md:flex flex-wrap items-center gap-2.5'}>
         <MultiSelect
           label={t('filter_cuisine')}
           icon={<ChefHat size={15} />}
@@ -302,17 +304,17 @@ export default function FilterBar({ filters, onChange, sort, onSortChange, resul
       </div>
 
       {/* Mobile trigger row */}
-      <div className="flex md:hidden items-center gap-2.5">
-        <button type="button" onClick={openSheet} className="relative flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-white text-[13.5px] font-semibold text-ink">
+      <div className={compact ? 'flex items-center' : 'flex md:hidden items-center gap-2.5'}>
+        <button type="button" onClick={openSheet} className={`relative flex items-center gap-2 px-4 py-2.5 rounded-full border bg-white text-[13.5px] font-semibold whitespace-nowrap ${active > 0 && compact ? 'border-green text-green' : 'border-border text-ink'}`}>
           <SlidersHorizontal size={15} />
           {t('filter_title')}
           {active > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-green text-cream text-[11px] font-bold flex items-center justify-center">{active}</span>}
         </button>
-        <SortSelect sort={sort} onSortChange={onSortChange} className="flex-1" />
+        {!compact && <SortSelect sort={sort} onSortChange={onSortChange} className="flex-1" />}
       </div>
 
       {/* Selected cuisines / dishes, removable one by one */}
-      {active > 0 && (
+      {active > 0 && !compact && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {filters.cuisines.map((c) => (
             <ActiveChip key={c} label={cuisineMap[c]?.label[lang] ?? c} onRemove={() => onChange({ ...filters, cuisines: filters.cuisines.filter((x) => x !== c) })} />
@@ -333,13 +335,13 @@ export default function FilterBar({ filters, onChange, sort, onSortChange, resul
       {createPortal(
       <AnimatePresence>
         {sheetOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 md:hidden bg-ink/40" onClick={() => setSheetOpen(false)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`fixed inset-0 z-50 bg-ink/40 flex items-end md:items-center md:justify-center ${compact ? '' : 'md:hidden'}`} onClick={() => setSheetOpen(false)}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
-              className="absolute bottom-0 left-0 right-0 bg-cream rounded-t-3xl h-[88dvh] flex flex-col"
+              className="w-full md:max-w-lg bg-cream rounded-t-3xl md:rounded-3xl h-[88dvh] md:h-[min(720px,86dvh)] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
@@ -411,6 +413,7 @@ export default function FilterBar({ filters, onChange, sort, onSortChange, resul
                   className="flex-[1.4] h-12 rounded-full bg-green text-cream font-semibold"
                 >
                   {t('filter_apply')}
+                  {compact && countActiveFilters(draft) > 0 ? ` (${countActiveFilters(draft)})` : ''}
                 </button>
               </div>
             </motion.div>

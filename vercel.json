@@ -1,13 +1,82 @@
 {
   "redirects": [
-    { "source": "/restaurant/:slug", "destination": "/restaurants/:slug", "permanent": true },
-    { "source": "/menu/:slug", "destination": "/restaurants/:slug/menu", "permanent": true },
-    { "source": "/r/:slug", "destination": "/restaurants/:slug/menu", "permanent": false }
+    {
+      "source": "/restaurant/:slug",
+      "destination": "/restaurants/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/menu/:slug",
+      "destination": "/restaurants/:slug/menu",
+      "permanent": true
+    },
+    {
+      "source": "/r/:slug",
+      "destination": "/restaurants/:slug/menu",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/restaurants/:slug/menu", "destination": "/api/render?slug=:slug&menu=1" },
-    { "source": "/restaurants/:slug", "destination": "/api/render?slug=:slug" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/restaurants/:slug/menu",
+      "destination": "/api/render?slug=:slug&menu=1"
+    },
+    {
+      "source": "/restaurants/:slug",
+      "destination": "/api/render?slug=:slug"
+    },
+    {
+      "source": "/dishes/:a/:b",
+      "destination": "/api/render?kind=dish&a=:a&b=:b"
+    },
+    {
+      "source": "/dishes/:a",
+      "destination": "/api/render?kind=dish&a=:a"
+    },
+    {
+      "source": "/cuisines/:a/:b",
+      "destination": "/api/render?kind=cuisine&a=:a&b=:b"
+    },
+    {
+      "source": "/cuisines/:a",
+      "destination": "/api/render?kind=cuisine&a=:a"
+    },
+    {
+      "source": "/areas/:a",
+      "destination": "/api/render?kind=area&a=:a"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(png|svg|webmanifest)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/menu-import.ts": {
+      "maxDuration": 60
+    }
+  }
 }

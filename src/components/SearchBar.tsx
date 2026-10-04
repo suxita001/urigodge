@@ -8,6 +8,7 @@ import { searchRestaurants, type SearchResult } from '../lib/search'
 import { categoryMap } from '../data/categories'
 import { restaurantPath } from '../lib/site'
 import { venueName } from '../lib/format'
+import { sized } from '../lib/image'
 
 interface SearchBarProps {
   large?: boolean
@@ -119,7 +120,7 @@ export default function SearchBar({ large = false, autoFocus = false, onNavigate
                       className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-cream-2 transition-colors text-left"
                     >
                       <img
-                        src={res.restaurant.coverImage}
+                        src={sized(res.restaurant.coverImage, 96, 96)}
                         alt=""
                         className="w-11 h-11 rounded-lg object-cover shrink-0"
                         loading="lazy"

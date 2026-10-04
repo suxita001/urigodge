@@ -8,6 +8,7 @@ import { ChatError, sendChat, type ChatMessage } from '../services/aiService'
 import { neighborhoodMap } from '../data/categories'
 import { priceSymbol, venueName } from '../lib/format'
 import { restaurantPath } from '../lib/site'
+import { sized } from '../lib/image'
 import type { TranslationKey } from '../i18n/translations'
 
 const STORAGE_KEY = 'urigod-chat'
@@ -190,7 +191,7 @@ export default function ChatWidget() {
                           onClick={() => window.matchMedia('(max-width: 639px)').matches && setOpen(false)}
                           className="flex items-center gap-3 p-2.5 rounded-2xl bg-white border border-border hover:border-green transition-colors"
                         >
-                          {r.coverImage ? <img src={r.coverImage} alt="" loading="lazy" className="w-12 h-12 rounded-xl object-cover shrink-0 bg-cream-2" /> : <span className="w-12 h-12 rounded-xl bg-cream-2 shrink-0" />}
+                          {r.coverImage ? <img src={sized(r.coverImage, 96, 96)} alt="" loading="lazy" className="w-12 h-12 rounded-xl object-cover shrink-0 bg-cream-2" /> : <span className="w-12 h-12 rounded-xl bg-cream-2 shrink-0" />}
                           <span className="min-w-0 flex-1">
                             <span className="block font-bold text-[14px] text-ink truncate">{venueName(r, lang)}</span>
                             <span className="flex items-center gap-1 text-[12.5px] text-ink-faint truncate">

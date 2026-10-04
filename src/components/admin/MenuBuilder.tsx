@@ -9,6 +9,7 @@ import ConfirmDialog from '../ui/ConfirmDialog'
 import { TextArea, TextInput, Toggle } from '../ui/Inputs'
 import { ImageUploader } from './ImageUploader'
 import { EmptyState } from './AdminUI'
+import MenuImport from './MenuImport'
 
 interface MenuBuilderProps {
   restaurantId: string
@@ -46,14 +47,17 @@ export default function MenuBuilder({ restaurantId, value, onChange }: MenuBuild
         <p className="text-[13.5px] text-ink-soft">
           <span className="font-bold text-ink">{stats.categories}</span> კატეგორია · <span className="font-bold text-ink">{stats.items}</span> კერძი
         </p>
-        <Button icon={<FolderPlus size={16} />} onClick={() => setEditing({ kind: 'category', category: emptyCategory(), isNew: true })}>
-          კატეგორიის დამატება
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <MenuImport current={value} onImport={onChange} />
+          <Button icon={<FolderPlus size={16} />} onClick={() => setEditing({ kind: 'category', category: emptyCategory(), isNew: true })}>
+            კატეგორიის დამატება
+          </Button>
+        </div>
       </div>
 
       {value.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border bg-white">
-          <EmptyState icon={UtensilsCrossed} title="მენიუ ჯერ ცარიელია" text="დაიწყე კატეგორიის დამატებით — მაგ. „საუზმე“ ან „ძირითადი კერძები“." />
+          <EmptyState icon={UtensilsCrossed} title="მენიუ ჯერ ცარიელია" text="ატვირთე მენიუს ფოტო და AI თავად დაალაგებს, ან დაიწყე კატეგორიის დამატებით — მაგ. „საუზმე“." />
         </div>
       ) : (
         <Reorder.Group axis="y" values={value} onReorder={onChange} className="flex flex-col gap-3" as="div">

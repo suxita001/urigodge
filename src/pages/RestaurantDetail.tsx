@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams, Link, Navigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   MapPin,
@@ -20,6 +20,11 @@ import { isOpenNow } from '../data/helpers'
 import { useSeo } from '../hooks/useSeo'
 import RestaurantGallery from '../components/RestaurantGallery'
 import BranchCard from '../components/BranchCard'
+import CopyLinkButton from '../components/CopyLinkButton'
+import RestaurantCard from '../components/RestaurantCard'
+import { useRestaurants } from '../hooks/useRestaurants'
+import { sized } from '../lib/image'
+import { landingPath } from '../../shared/taxonomy'
 import MapView from '../components/MapView'
 import { breadcrumbJsonLd, restaurantJsonLd, seoName } from '../lib/seo'
 import { menuPath, restaurantPath } from '../lib/site'
@@ -69,7 +74,38 @@ export default function RestaurantDetail() {
   const [activeBranchId, setActiveBranchId] = useState<string | undefined>(undefined)
 
   const { restaurant, loading } = useRestaurant(slug)
+  const { restaurants } = useRestaurants()
+  const [searchParams] = useSearchParams()
   const name = restaurant ? venueName(restaurant, lang) : ''
+
+  // A shared branch link (?branch=id) opens the page with that branch selected on the map.
+  const branchParam = searchParams.get('branch')
+  useEffect(() => {
+    const branch = restaurant?.branches.find((b) => b.id === branchParam)
+    if (branch) {
+      setActiveBranchId(branch.id)
+      setFocusTarget(branch.coordinates)
+    }
+  }, [restaurant, branchParam])
+
+  // Similar places: shared cuisines weigh most, then type, neighbourhood and price level.
+  const similar = useMemo(() => {
+    if (!restaurant) return []
+    return restaurants
+      .filter((r) => r.id !== restaurant.id)
+      .map((r) => ({
+        r,
+        score:
+          r.cuisine.filter((c) => restaurant.cuisine.includes(c)).length * 3 +
+          (r.category === restaurant.category ? 2 : 0) +
+          (r.neighborhood === restaurant.neighborhood ? 2 : 0) +
+          (r.priceLevel === restaurant.priceLevel ? 1 : 0),
+      }))
+      .filter((x) => x.score >= 3)
+      .sort((a, b) => b.score - a.score || b.r.popularity - a.r.popularity)
+      .slice(0, 3)
+      .map((x) => x.r)
+  }, [restaurant, restaurants])
 
   useSeo(
     restaurant ? `${seoName(restaurant, lang)} — ${t('seo_restaurant_title')} | urigod.ge` : 'urigod.ge',
@@ -116,9 +152,18 @@ export default function RestaurantDetail() {
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-ink-soft">
                 <span className="font-semibold text-green">{categoryMap[restaurant.category]?.label[lang]}</span>
                 <span className="text-border">•</span>
-                <span>{restaurant.cuisine.map((c) => cuisineMap[c]?.label[lang]).join(', ')}</span>
+                <span>
+                  {restaurant.cuisine.map((c, i) => (
+                    <span key={c}>
+                      {i > 0 && ', '}
+                      <Link to={landingPath('cuisine', c)} className="hover:text-green hover:underline">
+                        {cuisineMap[c]?.label[lang]}
+                      </Link>
+                    </span>
+                  ))}
+                </span>
                 <span className="text-border">•</span>
-                <span className="flex items-center gap-1"><MapPin size={13} />{neighborhoodMap[restaurant.neighborhood]?.label[lang]}</span>
+                <Link to={landingPath('area', restaurant.neighborhood)} className="flex items-center gap-1 hover:text-green hover:underline"><MapPin size={13} />{neighborhoodMap[restaurant.neighborhood]?.label[lang]}</Link>
                 <span className="text-border">•</span>
                 <span className="font-semibold">{priceSymbol(restaurant.priceLevel)} · {priceLabel(restaurant.priceLevel, lang)}</span>
               </div>
@@ -158,6 +203,7 @@ export default function RestaurantDetail() {
               {t('restaurant_menu')}
             </Link>
             <FavoriteButton restaurantId={restaurant.slug} variant="pill" />
+            <CopyLinkButton path={restaurantPath(restaurant.slug)} />
           </div>
         </motion.div>
 
@@ -182,7 +228,7 @@ export default function RestaurantDetail() {
                   {menuPreview.map((item) => (
                     <li key={item.id}>
                       <Link to={menuPath(restaurant.slug)} className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-white hover:border-green/50 transition-colors">
-                        {item.image && <img src={item.image} alt={tx(item.name)} loading="lazy" className="w-14 h-14 rounded-xl object-cover shrink-0 bg-cream-2" />}
+                        {item.image && <img src={sized(item.image, 112, 112)} alt={tx(item.name)} loading="lazy" decoding="async" className="w-14 h-14 rounded-xl object-cover shrink-0 bg-cream-2" />}
                         <span className="min-w-0 flex-1">
                           <span className="block font-semibold text-[14.5px] text-ink truncate">{tx(item.name)}</span>
                           <span className="block text-[12.5px] text-ink-faint truncate">{tx(item.description)}</span>
@@ -203,6 +249,7 @@ export default function RestaurantDetail() {
                     key={branch.id}
                     branch={branch}
                     active={activeBranchId === branch.id}
+                    sharePath={`${restaurantPath(restaurant.slug)}?branch=${encodeURIComponent(branch.id)}`}
                     onFocus={() => {
                       setActiveBranchId(branch.id)
                       setFocusTarget(branch.coordinates)
@@ -310,6 +357,17 @@ export default function RestaurantDetail() {
             </div>
           </aside>
         </div>
+
+        {similar.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-[22px] md:text-[26px] font-extrabold text-ink tracking-tight mb-6">{t('similar_title')}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {similar.map((r, i) => (
+                <RestaurantCard key={r.id} restaurant={r} index={i + 3} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
     </div>

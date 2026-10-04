@@ -16,7 +16,7 @@ export class GeminiError extends Error {
 
 export interface GeminiContent {
   role: 'user' | 'model'
-  parts: { text: string }[]
+  parts: ({ text: string } | { inlineData: { mimeType: string; data: string } })[]
 }
 
 export interface GenerateOptions {

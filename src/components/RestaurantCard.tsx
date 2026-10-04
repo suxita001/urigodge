@@ -7,9 +7,14 @@ import { categoryMap, neighborhoodMap } from '../data/categories'
 import { priceSymbol, venueName } from '../lib/format'
 import FavoriteButton from './FavoriteButton'
 import { restaurantPath } from '../lib/site'
+import { sized, srcSet } from '../lib/image'
+import { formatDistance } from '../lib/geo'
+import { nearestBranch } from '../lib/filters'
+import { useUserLocation } from '../context/LocationContext'
 
 export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: Restaurant; index?: number }) {
   const { t, tx, lang } = useLanguage()
+  const { location } = useUserLocation()
 
   return (
     <motion.div
@@ -24,9 +29,13 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-cream-2">
           <img
-            src={restaurant.coverImage}
+            src={sized(restaurant.coverImage, 480, 360)}
+            srcSet={srcSet(restaurant.coverImage, 480, 360)}
             alt={venueName(restaurant, lang)}
-            loading="lazy"
+            width={480}
+            height={360}
+            loading={index < 3 ? 'eager' : 'lazy'}
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           />
           <div className="absolute top-3 left-3 flex gap-1.5">
@@ -53,6 +62,7 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
             <span className="flex items-center gap-1 text-[13px] text-ink-faint">
               <MapPin size={13} />
               {neighborhoodMap[restaurant.neighborhood]?.label[lang]}
+              {location && <span className="text-ink-soft font-semibold">· {formatDistance(nearestBranch(restaurant, location), lang)}</span>}
             </span>
             <span className="flex items-center gap-1 text-[13px] font-semibold text-green group-hover:gap-1.5 transition-all">
               {t('card_view')}

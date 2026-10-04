@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import type { Restaurant, Coordinates } from '../data/types'
+import type { UserLocation } from '../context/LocationContext'
 
 function pinIcon(active: boolean) {
   const size = active ? 44 : 36
@@ -30,11 +31,6 @@ function clusterIcon(count: number) {
     }px;border:3px solid rgba(250,247,241,0.9);box-shadow:0 6px 16px rgba(28,26,22,0.28);">${count}</div>`,
     iconSize: [size, size],
   })
-}
-
-export interface UserLocation extends Coordinates {
-  /** Radius of uncertainty reported by the device, in metres. */
-  accuracy: number
 }
 
 const userIcon = L.divIcon({
@@ -93,7 +89,8 @@ export default function MapView({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          keepBuffer={4}
         />
         <FlyToController target={focusTarget} zoom={focusZoom} />
         {userLocation && (

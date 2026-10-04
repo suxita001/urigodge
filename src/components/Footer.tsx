@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { InstagramIcon, FacebookIcon } from './SocialIcons'
 import Logo from './Logo'
+import InstallButton from './InstallButton'
 import { useLanguage } from '../i18n/LanguageContext'
 
 export default function Footer() {
@@ -29,6 +30,7 @@ export default function Footer() {
                 <FacebookIcon size={16} />
               </a>
             </div>
+            <InstallButton />
           </div>
 
           <div>

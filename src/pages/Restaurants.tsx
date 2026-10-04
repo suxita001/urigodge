@@ -7,6 +7,8 @@ import SearchBar from '../components/SearchBar'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { useSeo } from '../hooks/useSeo'
+import { useToast } from '../hooks/useToast'
+import { useUserLocation } from '../context/LocationContext'
 import { defaultFilters, applyFilters, sortRestaurants, type FilterState, type SortOption } from '../lib/filters'
 import { searchRestaurants } from '../lib/search'
 import { categoryMap, cuisineMap } from '../data/categories'
@@ -23,6 +25,17 @@ export default function Restaurants() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [sort, setSort] = useState<SortOption>('recommended')
   const [query, setQuery] = useState('')
+  const toast = useToast()
+  const { location, locate } = useUserLocation()
+
+  // "Nearby" needs the visitor's position; without permission it falls back to the city centre.
+  async function changeSort(next: SortOption) {
+    setSort(next)
+    if (next === 'nearby' && !location) {
+      const result = await locate()
+      if (typeof result === 'string') toast.info(t('nearby_fallback'))
+    }
+  }
 
   // Deep links: /restaurants?category=pizza&cuisine=italian,french&dish=khinkali&q=...
   useEffect(() => {
@@ -46,9 +59,9 @@ export default function Restaurants() {
       list = list.filter((r) => matched.has(r.id))
     }
     list = applyFilters(list, filters)
-    list = sortRestaurants(list, sort, lang)
+    list = sortRestaurants(list, sort, lang, location)
     return list
-  }, [restaurants, filters, sort, query, lang])
+  }, [restaurants, filters, sort, query, lang, location])
 
   useSeo(`${t('restaurants_title')} — ${t('seo_restaurants_title')} | urigod.ge`, t('seo_restaurants_description'), {
     path: '/restaurants',
@@ -77,7 +90,7 @@ export default function Restaurants() {
       )}
 
       <div className="mt-6 sticky top-16 md:top-[72px] z-20 bg-cream/95 py-3 -mx-5 px-5 md:mx-0 md:px-0 md:bg-transparent md:static">
-        <FilterBar filters={filters} onChange={setFilters} sort={sort} onSortChange={setSort} resultCount={results.length} />
+        <FilterBar filters={filters} onChange={setFilters} sort={sort} onSortChange={changeSort} resultCount={results.length} />
       </div>
 
       {!loading && <p className="mt-5 text-[13.5px] text-ink-faint md:hidden">{t('results_count', { count: results.length })}</p>}

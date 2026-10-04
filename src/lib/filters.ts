@@ -1,4 +1,5 @@
-import type { CategoryId, CuisineId, NeighborhoodId, PriceLevel, Restaurant, Lang } from '../data/types'
+import type { CategoryId, Coordinates, CuisineId, NeighborhoodId, PriceLevel, Restaurant, Lang } from '../data/types'
+import { distanceMeters } from './geo'
 import { isOpenNow } from '../data/helpers'
 import { restaurantDishIds } from '../data/dishes'
 
@@ -52,14 +53,14 @@ export function applyFilters(restaurants: Restaurant[], filters: FilterState): R
   })
 }
 
-export function sortRestaurants(restaurants: Restaurant[], sort: SortOption, lang: Lang): Restaurant[] {
+export function sortRestaurants(restaurants: Restaurant[], sort: SortOption, lang: Lang, origin?: Coordinates | null): Restaurant[] {
   const arr = [...restaurants]
   switch (sort) {
     case 'az':
       return arr.sort((a, b) => a.name.localeCompare(b.name, lang === 'ka' ? 'ka' : 'en'))
     case 'nearby':
-      // No real geolocation yet — approximate by distance from Freedom Square (city center)
-      return arr.sort((a, b) => distFromCenter(a) - distFromCenter(b))
+      // From the visitor when we know where they are, otherwise from Freedom Square (city centre).
+      return arr.sort((a, b) => nearestBranch(a, origin ?? CENTER) - nearestBranch(b, origin ?? CENTER))
     case 'popular':
     case 'recommended':
     default:
@@ -68,8 +69,9 @@ export function sortRestaurants(restaurants: Restaurant[], sort: SortOption, lan
 }
 
 const CENTER = { lat: 41.6934, lng: 44.8015 }
-function distFromCenter(r: Restaurant): number {
-  const dLat = r.coordinates.lat - CENTER.lat
-  const dLng = r.coordinates.lng - CENTER.lng
-  return Math.sqrt(dLat * dLat + dLng * dLng)
+
+/** Distance in metres to the closest branch (or the main location when there are no branches). */
+export function nearestBranch(r: Restaurant, origin: Coordinates): number {
+  const points = r.branches.length ? r.branches.map((b) => b.coordinates) : [r.coordinates]
+  return Math.min(...points.map((p) => distanceMeters(origin, p)))
 }

@@ -1,5 +1,6 @@
 import { listRestaurants } from './_lib/firestore.js'
 import { SITE_URL, type ApiRequest, type ApiResponse } from './_lib/http.js'
+import { landingPath, listLandings } from '../shared/taxonomy.js'
 
 const STATIC_PAGES = [
   { path: '/', priority: '1.0', changefreq: 'daily' },
@@ -15,7 +16,11 @@ const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').
 export default async function handler(_req: ApiRequest, res: ApiResponse) {
   const urls = STATIC_PAGES.map((p) => `  <url><loc>${SITE_URL}${p.path === '/' ? '/' : p.path}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`)
   try {
-    for (const r of await listRestaurants()) {
+    const restaurants = await listRestaurants()
+    for (const l of listLandings(restaurants)) {
+      urls.push(`  <url><loc>${SITE_URL}${landingPath(l.kind, l.id, l.areaId)}</loc><changefreq>weekly</changefreq><priority>${l.areaId ? '0.5' : '0.6'}</priority></url>`)
+    }
+    for (const r of restaurants) {
       const lastmod = r.updatedAt ? `<lastmod>${r.updatedAt.slice(0, 10)}</lastmod>` : ''
       const slug = escapeXml(encodeURIComponent(r.slug))
       urls.push(`  <url><loc>${SITE_URL}/restaurants/${slug}</loc>${lastmod}<changefreq>weekly</changefreq><priority>0.8</priority></url>`)

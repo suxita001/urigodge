@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { sized } from '../lib/image'
 
 export default function RestaurantGallery({ images, alt }: { images: string[]; alt: string }) {
   const [index, setIndex] = useState(0)
@@ -16,7 +17,16 @@ export default function RestaurantGallery({ images, alt }: { images: string[]; a
       <div ref={trackRef} className="flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         {images.map((src, i) => (
           <div key={i} className="w-full h-full shrink-0 snap-start">
-            <img src={src} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover" loading={i === 0 ? 'eager' : 'lazy'} />
+            <img
+              src={sized(src, 1600)}
+              srcSet={src.includes('res.cloudinary.com') ? `${sized(src, 800)} 800w, ${sized(src, 1600)} 1600w` : undefined}
+              sizes="100vw"
+              alt={`${alt} ${i + 1}`}
+              className="w-full h-full object-cover"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchPriority={i === 0 ? 'high' : 'auto'}
+              decoding="async"
+            />
           </div>
         ))}
       </div>
