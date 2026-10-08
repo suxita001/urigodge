@@ -29,7 +29,7 @@ export default function AuthPromptModal({ open, onClose }: { open: boolean; onCl
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[600] bg-ink/45 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-4"
+          className="fixed inset-0 z-[600] bg-night/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div

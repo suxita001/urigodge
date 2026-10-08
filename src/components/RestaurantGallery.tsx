@@ -31,7 +31,7 @@ export default function RestaurantGallery({ images, alt }: { images: string[]; a
         ))}
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/35 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-night/35 via-transparent to-transparent pointer-events-none" />
 
       {images.length > 1 && (
         <>

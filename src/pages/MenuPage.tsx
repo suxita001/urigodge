@@ -85,7 +85,7 @@ function ItemSheet({ item, onClose }: { item: MenuItem; onClose: () => void }) {
   }, [onClose])
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-ink/50 flex items-end sm:items-center justify-center" onClick={onClose}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-night/50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <motion.div
         role="dialog"
         aria-modal="true"

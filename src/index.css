@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* `dark:` utilities follow the in-app theme switch, not the OS setting. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
   --color-cream: #faf7f1;
   --color-cream-2: #f3ede0;
@@ -12,6 +15,13 @@
   --color-border: #e7e0d1;
   --color-terracotta: #c1652f;
   --color-terracotta-light: #f5e6dc;
+  --color-page-alt: #f6f3ee;
+  --color-amber-bg: #fbf1d9;
+  --color-amber-fg: #9a6b00;
+  /* Never flip with the theme: scrims over photos and the always-dark admin sidebar. */
+  --color-night: #1c1a16;
+  --color-snow: #faf7f1;
+  --color-forest: #2f4d36;
 
   --font-sans: 'Manrope', 'Noto Sans Georgian', system-ui, sans-serif;
   --font-display: 'Noto Sans Georgian', 'Manrope', system-ui, sans-serif;
@@ -21,12 +31,50 @@
   --shadow-nav: 0 1px 0 rgba(28, 26, 22, 0.06), 0 12px 24px -16px rgba(28, 26, 22, 0.14);
 }
 
+/* Night theme: the same tokens, re-pointed. Components never need to know which theme is active. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-cream: #131210;
+  --color-cream-2: #1c1a16;
+  --color-white: #1d1b17;
+  --color-ink: #f2eee5;
+  --color-ink-soft: #b9b3a5;
+  --color-ink-faint: #888273;
+  --color-green: #8cbf96;
+  --color-green-dark: #a6d1ae;
+  --color-green-light: #1f2b22;
+  --color-border: #2e2b24;
+  --color-terracotta: #e48d5f;
+  --color-terracotta-light: #33241b;
+  --color-page-alt: #0e0d0b;
+  --color-amber-bg: #3a2f14;
+  --color-amber-fg: #f0c872;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.45), 0 20px 40px -12px rgba(0, 0, 0, 0.7);
+  --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 24px -16px rgba(0, 0, 0, 0.7);
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+body,
+header,
+footer {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 2px;
+}
+button:not(:disabled):active,
+a.press:active {
+  scale: 0.98;
 }
 
 body {
@@ -66,6 +114,35 @@ body {
 .leaflet-container {
   font-family: var(--font-sans);
   background: var(--color-cream-2);
+}
+
+/* OSM only ships a light map, so night mode inverts the tile layer and softens it. */
+:root[data-theme='dark'] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.55);
+}
+:root[data-theme='dark'] .leaflet-control-zoom a,
+:root[data-theme='dark'] .leaflet-bar a {
+  background: var(--color-white);
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+:root[data-theme='dark'] .leaflet-control-attribution {
+  background: rgba(19, 18, 16, 0.75);
+  color: var(--color-ink-faint);
+}
+:root[data-theme='dark'] .leaflet-control-attribution a {
+  color: var(--color-green);
+}
+:root[data-theme='dark'] .leaflet-popup-content-wrapper {
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+:root[data-theme='dark'] img {
+  filter: brightness(0.93);
+}
+:root[data-theme='dark'] .leaflet-marker-icon,
+:root[data-theme='dark'] img.keep-bright {
+  filter: none;
 }
 
 .leaflet-popup-content-wrapper {

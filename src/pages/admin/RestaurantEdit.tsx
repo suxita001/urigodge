@@ -193,7 +193,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
         </a>
       </div>
 
-      <div className="sticky top-16 md:top-[72px] z-10 -mx-4 md:mx-0 px-4 md:px-0 py-2 bg-[#f6f3ee]/90 backdrop-blur-md mb-4">
+      <div className="sticky top-16 md:top-[72px] z-10 -mx-4 md:mx-0 px-4 md:px-0 py-2 bg-page-alt/90 backdrop-blur-md mb-4">
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
           {tabs.map((t) => (
             <button
@@ -333,7 +333,7 @@ function ManagersTab({ restaurant }: { restaurant: Restaurant }) {
           ))}
           {pending.map((i) => (
             <li key={i.email} className="flex items-center gap-3 px-4 py-3">
-              <Avatar name={i.name || i.email} size={38} className="!bg-[#e9d9b0] !text-[#7a5500]" />
+              <Avatar name={i.name || i.email} size={38} className="!bg-amber-bg !text-amber-fg" />
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-[14.5px] text-ink truncate">{i.name || i.email}</p>
                 <p className="text-[12.5px] text-ink-faint truncate">{i.email}</p>

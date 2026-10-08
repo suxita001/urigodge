@@ -65,7 +65,7 @@ export function StatusBadge({ tone, children }: { tone: 'green' | 'terracotta' |
     green: 'bg-green-light text-green',
     terracotta: 'bg-terracotta-light text-terracotta',
     neutral: 'bg-cream-2 text-ink-soft',
-    amber: 'bg-[#fbf1d9] text-[#9a6b00]',
+    amber: 'bg-amber-bg text-amber-fg',
   }
   return <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-bold whitespace-nowrap ${tones[tone]}`}>{children}</span>
 }

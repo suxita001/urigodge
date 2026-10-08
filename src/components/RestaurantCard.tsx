@@ -25,7 +25,7 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
     >
       <Link
         to={restaurantPath(restaurant.slug)}
-        className="group block bg-white rounded-2xl border border-border overflow-hidden shadow-card hover:shadow-card-hover transition-shadow duration-300 h-full"
+        className="group block bg-white rounded-2xl border border-border overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-[box-shadow,transform] duration-300 h-full"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-cream-2">
           <img

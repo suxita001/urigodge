@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
+import ThemeToggle from '../ThemeToggle'
 import Spinner from '../ui/Spinner'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -66,14 +67,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="px-5 h-16 md:h-[72px] flex items-center border-b border-white/10">
         <Link to="/" className="flex items-center gap-2.5" onClick={onNavigate}>
           <img src={`${import.meta.env.BASE_URL}logo-light.png`} alt="" width={30} height={30} className="w-[30px] h-[30px]" />
-          <span className="text-[18px] font-extrabold tracking-tight text-cream">
+          <span className="text-[18px] font-extrabold tracking-tight text-snow">
             urigod<span className="text-[#9cc5a1]">.ge</span>
           </span>
         </Link>
       </div>
 
       <div className="px-5 pt-5 pb-2">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-cream/45">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-snow/45">
           {isSuperAdmin ? (
             <>
               <Crown size={12} className="text-[#e3b95f]" /> Super Admin
@@ -96,7 +97,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   to={item.to}
                   onClick={onNavigate}
                   className={`relative flex items-center gap-3 px-3.5 h-11 rounded-xl text-[14px] font-semibold transition-colors ${
-                    active ? 'bg-white/10 text-cream' : 'text-cream/65 hover:text-cream hover:bg-white/5'
+                    active ? 'bg-snow/10 text-snow' : 'text-snow/65 hover:text-snow hover:bg-snow/5'
                   }`}
                 >
                   {active && <motion.span layoutId="admin-nav-active" className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-[#9cc5a1]" />}
@@ -113,7 +114,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/"
           onClick={onNavigate}
-          className="flex items-center justify-between px-3.5 h-11 rounded-xl text-[13.5px] font-semibold text-cream/65 hover:text-cream hover:bg-white/5 transition-colors"
+          className="flex items-center justify-between px-3.5 h-11 rounded-xl text-[13.5px] font-semibold text-snow/65 hover:text-snow hover:bg-snow/5 transition-colors"
         >
           საიტზე დაბრუნება
           <ArrowUpRight size={16} />
@@ -139,8 +140,8 @@ export default function AdminLayout() {
   }, [drawerOpen])
 
   return (
-    <div className="min-h-screen bg-[#f6f3ee]">
-      <aside className="hidden lg:block fixed inset-y-0 left-0 w-[264px] bg-ink z-30">
+    <div className="min-h-screen bg-page-alt">
+      <aside className="hidden lg:block fixed inset-y-0 left-0 w-[264px] bg-night z-30">
         <SidebarContent />
       </aside>
 
@@ -150,7 +151,7 @@ export default function AdminLayout() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50 bg-ink/50"
+            className="lg:hidden fixed inset-0 z-50 bg-night/55"
             onClick={() => setDrawerOpen(false)}
           >
             <motion.aside
@@ -158,12 +159,12 @@ export default function AdminLayout() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
-              className="absolute inset-y-0 left-0 w-[84%] max-w-[300px] bg-ink"
+              className="absolute inset-y-0 left-0 w-[84%] max-w-[300px] bg-night"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="absolute top-3.5 right-3 w-10 h-10 rounded-full text-cream/70 hover:bg-white/10 flex items-center justify-center"
+                className="absolute top-3.5 right-3 w-10 h-10 rounded-full text-snow/70 hover:bg-snow/10 flex items-center justify-center"
                 aria-label="დახურვა"
               >
                 <X size={20} />
@@ -175,7 +176,7 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       <div className="lg:pl-[264px] min-w-0">
-        <header className="sticky top-0 z-20 h-16 md:h-[72px] bg-[#f6f3ee]/85 backdrop-blur-md border-b border-border flex items-center justify-between gap-3 px-4 md:px-8">
+        <header className="sticky top-0 z-20 h-16 md:h-[72px] bg-page-alt/85 backdrop-blur-md border-b border-border flex items-center justify-between gap-3 px-4 md:px-8">
           <button
             onClick={() => setDrawerOpen(true)}
             className="lg:hidden w-11 h-11 -ml-1.5 rounded-full flex items-center justify-center text-ink hover:bg-cream-2"
@@ -184,6 +185,7 @@ export default function AdminLayout() {
             <Menu size={22} />
           </button>
           <div className="flex-1" />
+          <ThemeToggle />
           <UserMenu />
         </header>
         <main className="px-4 md:px-8 py-6 md:py-8 max-w-[1280px]">

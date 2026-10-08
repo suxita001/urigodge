@@ -26,8 +26,8 @@ function VerifyEmailBanner() {
   const toast = useToast()
   const [busy, setBusy] = useState<'send' | 'refresh' | null>(null)
   return (
-    <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-[#ecd9a8] bg-[#fffaf0] px-5 py-4">
-      <MailWarning size={22} className="text-[#9a6b00] shrink-0" />
+    <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-amber-fg/30 bg-amber-bg/50 px-5 py-4">
+      <MailWarning size={22} className="text-amber-fg shrink-0" />
       <div className="flex-1">
         <p className="font-bold text-[14.5px] text-ink">{t('verify_email_title')}</p>
         <p className="text-[13px] text-ink-soft">{t('verify_email_text')}</p>

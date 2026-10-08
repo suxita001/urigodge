@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Search, LogOut, User } from 'lucide-react'
+import { Menu, X, Search, LogOut, User, Moon, Sun } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Logo from './Logo'
 import SearchBar from './SearchBar'
 import UserMenu from './UserMenu'
 import Avatar from './ui/Avatar'
+import ThemeToggle from './ThemeToggle'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import { loginPathFor } from '../utils/redirect'
 
 const links = [
@@ -24,6 +26,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
   const { currentUser, profile, loading: authLoading, logout } = useAuth()
   const onAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname)
   const loginHref = onAuthPage || location.pathname === '/' ? '/login' : loginPathFor(location.pathname + location.search)
@@ -93,6 +96,8 @@ export default function Navbar() {
               <Search size={19} />
             </button>
 
+            <ThemeToggle className="hidden md:flex" />
+
             <button
               onClick={toggleLang}
               className="flex items-center gap-1.5 px-3 h-10 rounded-full border border-border text-[13.5px] font-semibold text-ink-soft hover:bg-cream-2 hover:text-ink transition-colors"
@@ -155,7 +160,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 md:hidden bg-ink/40"
+            className="fixed inset-0 z-50 md:hidden bg-night/50"
             onClick={() => setMobileOpen(false)}
           >
             <motion.div
@@ -241,13 +246,22 @@ export default function Navbar() {
                     </div>
                   )
                 )}
-                <button
-                  onClick={toggleLang}
-                  className="w-full flex items-center justify-center gap-2 h-12 rounded-full border border-border text-[15px] font-semibold text-ink hover:bg-cream-2 transition-colors"
-                >
-                  <span>{lang === 'ka' ? '🇬🇪' : '🇬🇧'}</span>
-                  <span>{lang === 'ka' ? 'ქართული' : 'English'}</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={toggleLang}
+                    className="flex items-center justify-center gap-2 h-12 rounded-full border border-border text-[15px] font-semibold text-ink hover:bg-cream-2 transition-colors"
+                  >
+                    <span>{lang === 'ka' ? '🇬🇪' : '🇬🇧'}</span>
+                    <span>{lang === 'ka' ? 'ქართული' : 'English'}</span>
+                  </button>
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center gap-2 h-12 rounded-full border border-border text-[15px] font-semibold text-ink hover:bg-cream-2 transition-colors"
+                  >
+                    {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+                    <span>{theme === 'dark' ? t('theme_light') : t('theme_dark')}</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

@@ -38,7 +38,7 @@ export default function Modal({ open, onClose, title, description, children, foo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[800] bg-ink/45 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-6"
+          className="fixed inset-0 z-[800] bg-night/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-6"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) onClose()
           }}

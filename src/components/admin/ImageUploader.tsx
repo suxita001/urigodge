@@ -27,10 +27,10 @@ function useUploader(restaurantId: string, kind: ImageKind) {
 
 function ProgressOverlay({ progress }: { progress: number }) {
   return (
-    <div className="absolute inset-0 bg-ink/55 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2 text-cream">
+    <div className="absolute inset-0 bg-night/60 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2 text-snow">
       <UploadCloud size={22} />
       <div className="w-2/3 h-1.5 rounded-full bg-white/25 overflow-hidden">
-        <div className="h-full bg-cream transition-all" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-snow transition-all" style={{ width: `${progress}%` }} />
       </div>
       <span className="text-[12px] font-bold">{progress}%</span>
     </div>

@@ -73,11 +73,11 @@ function ManagedRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
     <Card className="overflow-hidden">
       <div className="relative h-40 md:h-52 bg-cream-2">
         {restaurant.coverImage && <img src={restaurant.coverImage} alt="" className="w-full h-full object-cover" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night/70 via-night/10 to-transparent" />
         <div className="absolute bottom-4 left-5 right-5 flex items-end gap-3">
           {restaurant.logo && <img src={restaurant.logo} alt="" className="w-12 h-12 rounded-xl object-cover border-2 border-white shrink-0" />}
           <div className="min-w-0">
-            <h2 className="text-[22px] md:text-[26px] font-extrabold text-cream tracking-tight truncate">{restaurant.nameI18n.ka || restaurant.name}</h2>
+            <h2 className="text-[22px] md:text-[26px] font-extrabold text-snow tracking-tight truncate">{restaurant.nameI18n.ka || restaurant.name}</h2>
             <StatusBadge tone={restaurant.status === 'published' ? 'green' : 'neutral'}>{restaurant.status === 'published' ? 'გამოქვეყნებული' : 'დრაფტი'}</StatusBadge>
           </div>
         </div>

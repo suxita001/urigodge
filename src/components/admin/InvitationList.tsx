@@ -27,8 +27,8 @@ export default function InvitationList({ invitations, describe, canManage = true
     <>
       <ul className="divide-y divide-border">
         {invitations.map((i) => (
-          <li key={i.email} className="flex flex-wrap sm:flex-nowrap items-center gap-3 px-4 md:px-5 py-3.5 bg-[#fffaf0]">
-            <Avatar name={i.name || i.email} size={38} className="!bg-[#e9d9b0] !text-[#7a5500]" />
+          <li key={i.email} className="flex flex-wrap sm:flex-nowrap items-center gap-3 px-4 md:px-5 py-3.5 bg-amber-bg/50">
+            <Avatar name={i.name || i.email} size={38} className="!bg-amber-bg !text-amber-fg" />
             <div className="min-w-0 flex-1">
               <p className="font-bold text-[14.5px] text-ink truncate">{i.name || i.email}</p>
               <p className="text-[12.5px] text-ink-faint truncate">

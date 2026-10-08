@@ -1,6 +1,7 @@
 import { useEffect, Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { LanguageProvider } from './i18n/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import { RestaurantsProvider } from './context/RestaurantsContext'
@@ -20,6 +21,7 @@ const MapPage = lazy(() => import('./pages/MapPage'))
 const RestaurantDetail = lazy(() => import('./pages/RestaurantDetail'))
 const MenuPage = lazy(() => import('./pages/MenuPage'))
 const Terms = lazy(() => import('./pages/Terms'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
@@ -104,6 +106,7 @@ const adminOnly = (el: React.ReactNode) => <RequireRole allow="admin">{el}</Requ
 
 export default function App() {
   return (
+    <ThemeProvider>
     <LanguageProvider>
       <ToastProvider>
         <AuthProvider>
@@ -142,7 +145,7 @@ export default function App() {
                           </RequireAuth>
                         }
                       />
-                      <Route path="*" element={<Navigate to="/" replace />} />
+                      <Route path="*" element={<NotFound />} />
                     </Route>
 
                     <Route
@@ -176,5 +179,6 @@ export default function App() {
         </AuthProvider>
       </ToastProvider>
     </LanguageProvider>
+    </ThemeProvider>
   )
 }

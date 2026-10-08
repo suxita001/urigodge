@@ -28,7 +28,7 @@ const categoryTone: Record<LogCategory, string> = {
   users: 'bg-cream-2 text-ink-soft',
   restaurants: 'bg-green-light text-green',
   menus: 'bg-terracotta-light text-terracotta',
-  managers: 'bg-[#fbf1d9] text-[#9a6b00]',
+  managers: 'bg-amber-bg text-amber-fg',
   admins: 'bg-ink text-cream',
   auth: 'bg-cream-2 text-ink-faint',
 }

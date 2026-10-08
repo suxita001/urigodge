@@ -86,7 +86,7 @@ export default function SearchBar({ large = false, autoFocus = false, onNavigate
           onFocus={() => setFocused(true)}
           placeholder={t('search_placeholder')}
           className={`w-full rounded-full border border-border bg-white text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-green/30 focus:border-green transition-colors ${
-            large ? 'py-4 pl-12 pr-12 text-[16px] shadow-card' : 'py-2.5 pl-11 pr-9 text-[14px]'
+            large ? 'py-4 pl-12 pr-11 text-[15px] sm:text-[16px] shadow-card' : 'py-2.5 pl-11 pr-9 text-[14px]'
           }`}
         />
         {query && (
