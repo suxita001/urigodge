@@ -30,7 +30,15 @@ function describe(r: ApiRestaurant, now: ReturnType<typeof tbilisiNow>, itemLimi
     .flatMap((c) => c.items)
     .filter((i) => i.available !== false)
     .slice(0, itemLimit)
-    .map((i) => `${i.name.ka || i.name.en} ${i.price}₾`)
+    .map((i) => {
+      const options = (i.options ?? [])
+        .map((g) => {
+          const list = g.options.map((o) => `${o.name.ka || o.name.en}${g.kind === 'variant' ? ` ${o.price}₾` : o.price > 0 ? ` +${o.price}₾` : ''}`).join('/')
+          return g.kind === 'variant' ? list : `${g.name.ka || g.name.en}: ${list}`
+        })
+        .join(', ')
+      return options ? `${i.name.ka || i.name.en} [${options}]` : `${i.name.ka || i.name.en} ${i.price}₾`
+    })
     .join('; ')
   return [
     `slug: ${r.slug}`,

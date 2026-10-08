@@ -1,20 +1,16 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { loadDemoRestaurants, subscribePublishedRestaurants } from '../services/restaurantService'
-import { subscribeSettings, DEFAULT_SETTINGS } from '../services/adminService'
-import type { Restaurant, SiteSettings } from '../data/types'
-
-export type RestaurantSource = 'firestore' | 'demo'
+import { subscribePublishedRestaurants } from '../services/restaurantService'
+import type { Restaurant } from '../data/types'
 
 export interface RestaurantsContextValue {
   restaurants: Restaurant[]
   loading: boolean
-  source: RestaurantSource | null
   getBySlug: (slug: string) => Restaurant | undefined
 }
 
 export const RestaurantsContext = createContext<RestaurantsContextValue | undefined>(undefined)
 
-const FIRST_SNAPSHOT_TIMEOUT_MS = 5000
+const FIRST_SNAPSHOT_TIMEOUT_MS = 8000
 const EMPTY: Restaurant[] = []
 
 // The list from the previous visit is shown straight away while Firestore (a large script plus a
@@ -46,12 +42,10 @@ function writeCache(list: Restaurant[]) {
 type FirestoreState = { status: 'waiting' } | { status: 'ok'; list: Restaurant[] } | { status: 'failed' }
 
 // Live subscription: edits made in the dashboard show up on the public site without a reload.
-// While Firestore has no published restaurants (or is unreachable) the bundled demo data is shown,
-// unless the super admin turned that off in Settings.
+// Only real, published restaurants are ever shown. If Firestore is slow or unreachable the copy
+// from the last visit stays on screen; a late first snapshot still replaces it when it arrives.
 export function RestaurantsProvider({ children }: { children: ReactNode }) {
   const [firestore, setFirestore] = useState<FirestoreState>({ status: 'waiting' })
-  const [settings, setSettings] = useState<SiteSettings | null>(null)
-  const [demo, setDemo] = useState<Restaurant[] | null>(null)
   const [cached] = useState(readCache)
 
   useEffect(() => {
@@ -72,46 +66,13 @@ export function RestaurantsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useEffect(() => {
-    const timer = setTimeout(() => setSettings((s) => s ?? DEFAULT_SETTINGS), FIRST_SNAPSHOT_TIMEOUT_MS)
-    const unsubscribe = subscribeSettings(setSettings)
-    return () => {
-      clearTimeout(timer)
-      unsubscribe()
-    }
-  }, [])
-
-  const firestoreEmpty = firestore.status === 'failed' || (firestore.status === 'ok' && firestore.list.length === 0)
-  const wantDemo = firestoreEmpty && (firestore.status === 'failed' || settings?.demoFallback !== false)
-  const decided = firestore.status === 'failed' || (firestore.status === 'ok' && (firestore.list.length > 0 || settings !== null))
-
-  useEffect(() => {
-    if (wantDemo && !demo) loadDemoRestaurants().then(setDemo)
-  }, [wantDemo, demo])
-
-  let restaurants = EMPTY
-  let source: RestaurantSource | null = null
-  let loading = true
-  if (firestore.status === 'waiting' && cached) {
-    restaurants = cached
-    source = 'firestore'
-    loading = false
-  } else if (decided) {
-    if (wantDemo) {
-      restaurants = demo ?? EMPTY
-      source = 'demo'
-      loading = !demo
-    } else {
-      restaurants = firestore.status === 'ok' ? firestore.list : EMPTY
-      source = 'firestore'
-      loading = false
-    }
-  }
+  const restaurants = firestore.status === 'ok' ? firestore.list : (cached ?? EMPTY)
+  const loading = firestore.status === 'waiting' && !cached
 
   const bySlug = useMemo(() => new Map(restaurants.map((r) => [r.slug, r])), [restaurants])
   const getBySlug = useCallback((slug: string) => bySlug.get(slug), [bySlug])
 
-  const value = useMemo(() => ({ restaurants, loading, source, getBySlug }), [restaurants, loading, source, getBySlug])
+  const value = useMemo(() => ({ restaurants, loading, getBySlug }), [restaurants, loading, getBySlug])
 
   return <RestaurantsContext.Provider value={value}>{children}</RestaurantsContext.Provider>
 }

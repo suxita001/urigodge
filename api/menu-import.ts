@@ -15,7 +15,12 @@ Rules:
 - Keep the menu's own sections as categories, in the order they appear. If the menu has no sections, use a single category named "მენიუ" / "Menu".
 - Every name is given in Georgian (name_ka) and English (name_en). If the menu is printed in only one language, translate into the other. Use the usual English spellings of Georgian dishes (Khinkali, Khachapuri, Mtsvadi) and write foreign brand or dish names in Georgian letters the way a Georgian menu would.
 - description_ka / description_en: only when the menu itself prints a description or ingredients for that item — translate it into the missing language. Otherwise both must be empty strings.
-- price: the number printed for the item, in Georgian lari, without the currency sign. If an item has several sizes or prices, output one item per size and put the size in both names (for example "ლუდი 0.5 ლ" / "Beer 0.5 l"). If no price is readable use 0.
+- price: the number printed for the item, in Georgian lari, without the currency sign. If no price is readable use 0.
+- options: only when the menu prints them for that item; otherwise an empty array. Each group has a kind:
+  - "variant": the item is sold in several sizes or versions, each with its own price (0.33 l / 0.5 l, small / large, single / double). List every size with its full price, name the group "ზომა" / "Size" (or what the menu calls it), and set the item's price to the cheapest one. Never output separate items per size.
+  - "choice": the guest picks exactly one of several (a combo's drink: Cola / Fanta / Sprite; a sauce). Option price is the surcharge printed for it, or 0 when it is included.
+  - "addon": optional extras that cost more (toppings, extra cheese, extra shot). Option price is the amount added.
+  Extras printed once for a whole section (for example "ტოპინგები +1 ₾" under ice creams) belong to every item of that section.
 - Ignore everything that is not an item: logos, addresses, phone numbers, slogans, service-charge notes, page numbers.
 - If the file is not a menu, return an empty "categories" array.`
 
@@ -39,8 +44,28 @@ const SCHEMA = {
                 description_ka: { type: 'STRING' },
                 description_en: { type: 'STRING' },
                 price: { type: 'NUMBER' },
+                options: {
+                  type: 'ARRAY',
+                  items: {
+                    type: 'OBJECT',
+                    properties: {
+                      kind: { type: 'STRING', enum: ['variant', 'choice', 'addon'] },
+                      name_ka: { type: 'STRING' },
+                      name_en: { type: 'STRING' },
+                      options: {
+                        type: 'ARRAY',
+                        items: {
+                          type: 'OBJECT',
+                          properties: { name_ka: { type: 'STRING' }, name_en: { type: 'STRING' }, price: { type: 'NUMBER' } },
+                          required: ['name_ka', 'name_en', 'price'],
+                        },
+                      },
+                    },
+                    required: ['kind', 'name_ka', 'name_en', 'options'],
+                  },
+                },
               },
-              required: ['name_ka', 'name_en', 'description_ka', 'description_en', 'price'],
+              required: ['name_ka', 'name_en', 'description_ka', 'description_en', 'price', 'options'],
             },
           },
         },
@@ -57,9 +82,31 @@ interface RawItem {
   description_ka?: string
   description_en?: string
   price?: number
+  options?: { kind?: string; name_ka?: string; name_en?: string; options?: { name_ka?: string; name_en?: string; price?: number }[] }[]
 }
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+const money = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v) * 100) / 100 : 0)
+
+const DEFAULT_GROUP_NAME = { variant: { ka: 'ზომა', en: 'Size' }, choice: { ka: 'არჩევანი', en: 'Choice' }, addon: { ka: 'დამატება', en: 'Extras' } }
+
+function cleanOptions(raw: RawItem['options']) {
+  let hasVariants = false
+  return (Array.isArray(raw) ? raw : [])
+    .map((g) => {
+      const kind = g.kind === 'variant' || g.kind === 'choice' ? g.kind : ('addon' as const)
+      const options = (Array.isArray(g.options) ? g.options : [])
+        .map((o) => ({ name: { ka: clean(o.name_ka, 80) || clean(o.name_en, 80), en: clean(o.name_en, 80) || clean(o.name_ka, 80) }, price: money(o.price) }))
+        .filter((o) => o.name.ka && (kind !== 'variant' || o.price > 0))
+      return { kind, name: { ka: clean(g.name_ka, 60) || DEFAULT_GROUP_NAME[kind].ka, en: clean(g.name_en, 60) || DEFAULT_GROUP_NAME[kind].en }, options }
+    })
+    .filter((g) => {
+      // A dish has one set of sizes at most, and a single "size" is just the price.
+      if (g.kind === 'variant' && (hasVariants || g.options.length < 2)) return false
+      if (g.kind === 'variant') hasVariants = true
+      return g.options.length > 0
+    })
+}
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'POST') {
@@ -104,11 +151,16 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       .map((c) => ({
         name: { ka: clean(c.name_ka, 80) || clean(c.name_en, 80), en: clean(c.name_en, 80) || clean(c.name_ka, 80) },
         items: (Array.isArray(c.items) ? c.items : [])
-          .map((i) => ({
-            name: { ka: clean(i.name_ka, 120) || clean(i.name_en, 120), en: clean(i.name_en, 120) || clean(i.name_ka, 120) },
-            description: { ka: clean(i.description_ka, 400), en: clean(i.description_en, 400) },
-            price: Number.isFinite(Number(i.price)) && Number(i.price) > 0 ? Math.round(Number(i.price) * 100) / 100 : 0,
-          }))
+          .map((i) => {
+            const options = cleanOptions(i.options)
+            const variants = options.find((g) => g.kind === 'variant')
+            return {
+              name: { ka: clean(i.name_ka, 120) || clean(i.name_en, 120), en: clean(i.name_en, 120) || clean(i.name_ka, 120) },
+              description: { ka: clean(i.description_ka, 400), en: clean(i.description_en, 400) },
+              price: variants ? Math.min(...variants.options.map((o) => o.price)) : money(i.price),
+              ...(options.length ? { options } : {}),
+            }
+          })
           .filter((i) => i.name.ka || i.name.en),
       }))
       .filter((c) => c.items.length > 0)

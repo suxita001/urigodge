@@ -2,8 +2,7 @@ import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, type T
 import { db } from '../lib/firebase'
 import type { Favorite } from '../data/types'
 
-// Favorites are keyed by restaurant slug (which is also the Firestore restaurant doc ID),
-// so saved places stay valid when data moves from the demo dataset to Firestore.
+// Favorites are keyed by restaurant slug, which is also the Firestore restaurant doc ID.
 const favoritesCol = (uid: string) => collection(db, 'users', uid, 'favorites')
 const favoriteRef = (uid: string, restaurantId: string) => doc(db, 'users', uid, 'favorites', restaurantId)
 

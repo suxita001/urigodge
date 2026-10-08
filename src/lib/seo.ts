@@ -1,4 +1,5 @@
 import type { Lang, OpeningHours, Restaurant } from '../data/types'
+import { variantGroup } from './menuOptions'
 import { cuisineMap } from '../data/categories'
 import { SITE_NAME, SITE_URL, absoluteUrl, menuPath, restaurantPath } from './site'
 import { priceSymbol } from './format'
@@ -114,7 +115,9 @@ export function menuJsonLd(r: Restaurant, lang: Lang): JsonLd {
         name: text(item.name),
         description: text(item.description) || undefined,
         image: item.image || undefined,
-        offers: { '@type': 'Offer', price: item.price.toFixed(2), priceCurrency: 'GEL' },
+        offers: variantGroup(item)
+          ? variantGroup(item)!.options.map((o) => ({ '@type': 'Offer', name: text(o.name), price: o.price.toFixed(2), priceCurrency: 'GEL' }))
+          : { '@type': 'Offer', price: item.price.toFixed(2), priceCurrency: 'GEL' },
       })),
     })),
   }

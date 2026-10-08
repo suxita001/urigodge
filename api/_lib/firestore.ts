@@ -14,10 +14,17 @@ interface DayHours {
   closed?: boolean
 }
 
+export interface ApiMenuOptionGroup {
+  name: Localized
+  kind: 'variant' | 'choice' | 'addon'
+  options: { name: Localized; price: number }[]
+}
+
 export interface ApiMenuItem {
   name: Localized
   description: Localized
   price: number
+  options?: ApiMenuOptionGroup[]
   image?: string
   available?: boolean
 }
@@ -74,6 +81,18 @@ const text = (v: unknown): Localized => {
   return { ka: o.ka ?? '', en: o.en ?? '' }
 }
 
+function toOptionGroups(raw: unknown): ApiMenuOptionGroup[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const groups = (raw as { name?: unknown; kind?: unknown; options?: { name?: unknown; price?: unknown }[] }[])
+    .map((g) => ({
+      name: text(g.name),
+      kind: (g.kind === 'variant' || g.kind === 'choice' ? g.kind : 'addon') as ApiMenuOptionGroup['kind'],
+      options: (Array.isArray(g.options) ? g.options : []).map((o) => ({ name: text(o.name), price: Number(o.price) || 0 })),
+    }))
+    .filter((g) => g.options.length > 0)
+  return groups.length ? groups : undefined
+}
+
 function toRestaurant(id: string, raw: Record<string, unknown>, updateTime?: string): ApiRestaurant {
   const images = Array.isArray(raw.images) ? (raw.images as string[]) : []
   const cuisine = raw.cuisine
@@ -103,6 +122,7 @@ function toRestaurant(id: string, raw: Record<string, unknown>, updateTime?: str
         name: text(i.name),
         description: text(i.description),
         price: Number(i.price) || 0,
+        options: toOptionGroups(i.options),
         image: (i.image as string) || undefined,
         available: i.available !== false,
       })),

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Search, MapPin, ScrollText, Sparkles } from 'lucide-react'
+import { ArrowRight, Search, MapPin, ScrollText, Sparkles, UtensilsCrossed } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import CategoryPill from '../components/CategoryPill'
 import RestaurantGrid from '../components/RestaurantGrid'
@@ -17,11 +17,11 @@ import { websiteJsonLd } from '../lib/seo'
 export default function Home() {
   const { t, lang } = useLanguage()
   const { restaurants, loading } = useRestaurants()
-  useSeo(t('seo_home_title'), t('seo_home_description'), { path: '/', jsonLd: websiteJsonLd() })
-  const featured = useMemo(
-    () => [...restaurants].sort((a, b) => b.popularity - a.popularity).slice(0, 6),
-    [restaurants]
-  )
+  useSeo(t('seo_home_title'), t('seo_home_description'), {
+    path: '/',
+    jsonLd: websiteJsonLd(),
+  })
+  const featured = useMemo(() => [...restaurants].sort((a, b) => b.popularity - a.popularity).slice(0, 6), [restaurants])
 
   const stats = useMemo(() => {
     const areas = new Set(restaurants.map((r) => r.neighborhood))
@@ -34,6 +34,8 @@ export default function Home() {
     for (const r of restaurants) counts.set(r.neighborhood, (counts.get(r.neighborhood) ?? 0) + 1)
     return counts
   }, [restaurants])
+
+  const empty = !loading && restaurants.length === 0
 
   const mosaic = useMemo(() => featured.filter((r) => r.coverImage).slice(0, 4), [featured])
 
@@ -60,28 +62,20 @@ export default function Home() {
         {mosaic.length >= 4 && (
           <div className="hidden xl:block pointer-events-none" aria-hidden="true">
             {mosaic.map((r, i) => {
-              const pos = [
-                'left-[3%] top-24 -rotate-6 w-[190px]',
-                'left-[9%] top-[330px] rotate-3 w-[150px]',
-                'right-[3%] top-28 rotate-6 w-[180px]',
-                'right-[8%] top-[340px] -rotate-3 w-[160px]',
-              ][i]
+              const pos = ['left-[3%] top-24 -rotate-6 w-[190px]', 'left-[9%] top-[330px] rotate-3 w-[150px]', 'right-[3%] top-28 rotate-6 w-[180px]', 'right-[8%] top-[340px] -rotate-3 w-[160px]'][i]
               return (
                 <motion.div
                   key={r.slug}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.3 + i * 0.1, ease: 'easeOut' }}
+                  transition={{
+                    duration: 0.6,
+                    delay: 0.3 + i * 0.1,
+                    ease: 'easeOut',
+                  }}
                   className={`absolute ${pos} rounded-2xl bg-white p-1.5 shadow-card-hover border border-border`}
                 >
-                  <img
-                    src={sized(r.coverImage, 360, 360)}
-                    alt=""
-                    width={360}
-                    height={360}
-                    loading="lazy"
-                    className="w-full aspect-square object-cover rounded-xl"
-                  />
+                  <img src={sized(r.coverImage, 360, 360)} alt="" width={360} height={360} loading="lazy" className="w-full aspect-square object-cover rounded-xl" />
                   <p className="px-1.5 pt-1.5 pb-0.5 text-[11.5px] font-bold text-ink-soft truncate">{venueName(r, lang)}</p>
                 </motion.div>
               )
@@ -117,12 +111,7 @@ export default function Home() {
               {t('hero_subtitle')}
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.2, ease: 'easeOut' }}
-              className="mt-8 max-w-xl mx-auto"
-            >
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.2, ease: 'easeOut' }} className="mt-8 max-w-xl mx-auto">
               <SearchBar large />
             </motion.div>
 
@@ -145,28 +134,17 @@ export default function Home() {
               transition={{ duration: 0.55, delay: 0.34, ease: 'easeOut' }}
               className="mt-9 flex flex-wrap items-center justify-center gap-3"
             >
-              <Link
-                to="/restaurants"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-green text-cream font-bold text-[15px] hover:bg-green-dark transition-colors shadow-card"
-              >
+              <Link to="/restaurants" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-green text-cream font-bold text-[15px] hover:bg-green-dark transition-colors shadow-card">
                 {t('hero_cta_explore')}
                 <ArrowRight size={17} />
               </Link>
-              <Link
-                to="/map"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-border bg-white text-ink font-bold text-[15px] hover:bg-cream-2 transition-colors"
-              >
+              <Link to="/map" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-border bg-white text-ink font-bold text-[15px] hover:bg-cream-2 transition-colors">
                 {t('hero_cta_map')}
               </Link>
             </motion.div>
 
             {stats.places > 0 && (
-              <motion.dl
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="mt-12 mx-auto max-w-md grid grid-cols-3 divide-x divide-border"
-              >
+              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className="mt-12 mx-auto max-w-md grid grid-cols-3 divide-x divide-border">
                 {[
                   { n: stats.places, label: t('stat_places') },
                   { n: stats.dishes, label: t('stat_dishes') },
@@ -189,7 +167,11 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
           {[
             { icon: Search, title: t('how_1_title'), text: t('how_1_text') },
-            { icon: ScrollText, title: t('how_2_title'), text: t('how_2_text') },
+            {
+              icon: ScrollText,
+              title: t('how_2_title'),
+              text: t('how_2_text'),
+            },
             { icon: MapPin, title: t('how_3_title'), text: t('how_3_text') },
           ].map((step, i) => (
             <motion.div
@@ -202,9 +184,7 @@ export default function Home() {
             >
               <div className="relative w-14 h-14 rounded-2xl bg-green-light text-green flex items-center justify-center mx-auto mb-4">
                 <step.icon size={24} />
-                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-green text-cream text-[12px] font-extrabold flex items-center justify-center ring-4 ring-cream">
-                  {i + 1}
-                </span>
+                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-green text-cream text-[12px] font-extrabold flex items-center justify-center ring-4 ring-cream">{i + 1}</span>
               </div>
               <h3 className="font-bold text-[17px] text-ink mb-1.5">{step.title}</h3>
               <p className="text-[14.5px] text-ink-soft leading-relaxed">{step.text}</p>
@@ -213,57 +193,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured */}
-      <section className="max-w-7xl mx-auto px-5 md:px-8 py-14 md:py-20">
-        <div className="flex items-end justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-[24px] md:text-[30px] font-extrabold text-ink tracking-tight">{t('featured_title')}</h2>
-            <p className="mt-1.5 text-[14.5px] text-ink-soft">{t('featured_subtitle')}</p>
+      {/* Nothing published yet */}
+      {empty && (
+        <section className="max-w-7xl mx-auto px-5 md:px-8 py-6">
+          <div className="flex flex-col items-center text-center py-14 px-6 rounded-3xl border border-dashed border-border bg-white">
+            <div className="w-14 h-14 rounded-2xl bg-green-light text-green flex items-center justify-center mb-4">
+              <UtensilsCrossed size={24} />
+            </div>
+            <h2 className="text-[20px] font-extrabold text-ink">{t('soon_title')}</h2>
+            <p className="mt-1.5 text-[14.5px] text-ink-soft max-w-sm leading-relaxed">{t('soon_text')}</p>
           </div>
-          <Link
-            to="/restaurants"
-            className="hidden sm:inline-flex items-center gap-1 text-[14px] font-bold text-green whitespace-nowrap hover:gap-1.5 transition-all"
-          >
-            {t('featured_view_all')}
-            <ArrowRight size={15} />
-          </Link>
-        </div>
+        </section>
+      )}
 
-        <RestaurantGrid restaurants={featured} loading={loading} />
-
-        <div className="mt-8 text-center sm:hidden">
-          <Link
-            to="/restaurants"
-            className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full border border-border bg-white text-ink font-bold text-[14.5px]"
-          >
-            {t('featured_view_all')}
-            <ArrowRight size={15} />
-          </Link>
-        </div>
-      </section>
-
-      {/* Areas */}
-      <section className="max-w-7xl mx-auto px-5 md:px-8 pb-6 md:pb-10">
-        <h2 className="text-[24px] md:text-[30px] font-extrabold text-ink tracking-tight">{t('areas_title')}</h2>
-        <p className="mt-1.5 text-[14.5px] text-ink-soft">{t('areas_subtitle')}</p>
-        <div className="mt-6 flex flex-wrap gap-2.5">
-          {areaList
-            .filter((a) => areaCounts.has(a.id))
-            .sort((a, b) => (areaCounts.get(b.id) ?? 0) - (areaCounts.get(a.id) ?? 0))
-            .map((a) => (
-              <Link
-                key={a.id}
-                to={landingPath('area', a.id)}
-                className="group inline-flex items-center gap-2 pl-4 pr-2.5 h-11 rounded-full border border-border bg-white text-[14.5px] font-semibold text-ink hover:border-green hover:text-green transition-colors"
-              >
-                {a.label[lang]}
-                <span className="min-w-6 h-6 px-1.5 rounded-full bg-cream-2 group-hover:bg-green-light text-[12px] font-bold text-ink-soft group-hover:text-green flex items-center justify-center tabular-nums transition-colors">
-                  {areaCounts.get(a.id)}
-                </span>
+      {/* Featured */}
+      {!empty && (
+        <>
+          <section className="max-w-7xl mx-auto px-5 md:px-8 py-14 md:py-20">
+            <div className="flex items-end justify-between mb-8 gap-4">
+              <div>
+                <h2 className="text-[24px] md:text-[30px] font-extrabold text-ink tracking-tight">{t('featured_title')}</h2>
+                <p className="mt-1.5 text-[14.5px] text-ink-soft">{t('featured_subtitle')}</p>
+              </div>
+              <Link to="/restaurants" className="hidden sm:inline-flex items-center gap-1 text-[14px] font-bold text-green whitespace-nowrap hover:gap-1.5 transition-all">
+                {t('featured_view_all')}
+                <ArrowRight size={15} />
               </Link>
-            ))}
-        </div>
-      </section>
+            </div>
+
+            <RestaurantGrid restaurants={featured} loading={loading} />
+
+            <div className="mt-8 text-center sm:hidden">
+              <Link to="/restaurants" className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full border border-border bg-white text-ink font-bold text-[14.5px]">
+                {t('featured_view_all')}
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+          </section>
+
+          {/* Areas */}
+          <section className="max-w-7xl mx-auto px-5 md:px-8 pb-6 md:pb-10">
+            <h2 className="text-[24px] md:text-[30px] font-extrabold text-ink tracking-tight">{t('areas_title')}</h2>
+            <p className="mt-1.5 text-[14.5px] text-ink-soft">{t('areas_subtitle')}</p>
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              {areaList
+                .filter((a) => areaCounts.has(a.id))
+                .sort((a, b) => (areaCounts.get(b.id) ?? 0) - (areaCounts.get(a.id) ?? 0))
+                .map((a) => (
+                  <Link
+                    key={a.id}
+                    to={landingPath('area', a.id)}
+                    className="group inline-flex items-center gap-2 pl-4 pr-2.5 h-11 rounded-full border border-border bg-white text-[14.5px] font-semibold text-ink hover:border-green hover:text-green transition-colors"
+                  >
+                    {a.label[lang]}
+                    <span className="min-w-6 h-6 px-1.5 rounded-full bg-cream-2 group-hover:bg-green-light text-[12px] font-bold text-ink-soft group-hover:text-green flex items-center justify-center tabular-nums transition-colors">
+                      {areaCounts.get(a.id)}
+                    </span>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Owners */}
       <section className="max-w-7xl mx-auto px-5 md:px-8 py-14 md:py-20">

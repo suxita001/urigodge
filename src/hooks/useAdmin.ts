@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Invitation, Restaurant, SiteSettings, UserProfile } from '../data/types'
-import { subscribeUsers, fetchAdminStats, subscribeSettings, DEFAULT_SETTINGS, type AdminStats } from '../services/adminService'
+import type { Invitation, Restaurant, UserProfile } from '../data/types'
+import { subscribeUsers, fetchAdminStats, type AdminStats } from '../services/adminService'
 import { subscribeInvitations } from '../services/invitationService'
 import { subscribeAllRestaurants, subscribeRestaurant } from '../services/restaurantService'
 import { useAuth } from './useAuth'
@@ -53,12 +53,6 @@ export function useAdminStats(refreshKey = 0) {
     }
   }, [isAdmin, refreshKey])
   return stats
-}
-
-export function useSiteSettings() {
-  const subscribe = useCallback((set: (v: SiteSettings) => void) => subscribeSettings(set), [])
-  const { data, loading } = useSubscription(subscribe, DEFAULT_SETTINGS)
-  return { settings: data, loading }
 }
 
 /** Restaurants the current staff member can manage: all for admins, assigned ones for managers (live). */

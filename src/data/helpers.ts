@@ -1,9 +1,5 @@
 import type { DayHours, OpeningHours } from './types'
 
-export function img(seed: string, w = 1200, h = 800): string {
-  return `https://picsum.photos/seed/${seed}/${w}/${h}`
-}
-
 export function dailyHours(open: string, close: string, closedDays: number[] = []): OpeningHours {
   const days: (keyof OpeningHours)[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
   const entry: Partial<OpeningHours> = {}

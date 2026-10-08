@@ -1,19 +1,17 @@
 import {
   collection,
-  doc,
   getCountFromServer,
   getDocs,
   limit,
   onSnapshot,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where,
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import type { SiteSettings, UserProfile, UserRole } from '../data/types'
+import type { UserProfile, UserRole } from '../data/types'
 import { toProfile, userRef } from './userService'
 import { logActivity } from './activityLogService'
 import { createInvitation, normalizeEmail, sendInvitationEmail } from './invitationService'
@@ -135,27 +133,4 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     admins: admins.data().count + supers.data().count,
     recentActivities: recent.data().count,
   }
-}
-
-// ---- Site settings (settings/site): public read, super admin write ----
-
-const settingsRef = doc(db, 'settings', 'site')
-export const DEFAULT_SETTINGS: SiteSettings = { demoFallback: true }
-
-export function subscribeSettings(onChange: (s: SiteSettings) => void): () => void {
-  return onSnapshot(
-    settingsRef,
-    (snap) => onChange({ ...DEFAULT_SETTINGS, ...(snap.data() as Partial<SiteSettings> | undefined) }),
-    () => onChange(DEFAULT_SETTINGS)
-  )
-}
-
-export async function updateSettings(patch: Partial<SiteSettings>): Promise<void> {
-  await setDoc(settingsRef, { ...patch, updatedAt: serverTimestamp() }, { merge: true })
-  await logActivity({
-    action: 'SETTINGS_UPDATED',
-    targetType: 'settings',
-    targetId: 'site',
-    description: `სისტემის პარამეტრები შეიცვალა: ${Object.keys(patch).join(', ')}`,
-  })
 }

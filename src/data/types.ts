@@ -98,11 +98,30 @@ export interface Branch {
   isMain?: boolean
 }
 
+export type MenuOptionKind = 'variant' | 'choice' | 'addon'
+
+export interface MenuOption {
+  id: string
+  name: LocalizedText
+  /** Full price for a `variant`; an amount added on top for `choice` and `addon` (0 = included). */
+  price: number
+}
+
+/** Sizes, a drink to pick, toppings… see lib/menuOptions.ts for how each kind is priced. */
+export interface MenuOptionGroup {
+  id: string
+  name: LocalizedText
+  kind: MenuOptionKind
+  options: MenuOption[]
+}
+
 export interface MenuItem {
   id: string
   name: LocalizedText
   description: LocalizedText
+  /** With a `variant` group this is kept equal to the cheapest variant. */
   price: number
+  options?: MenuOptionGroup[]
   image?: string
   /** Missing means available. */
   available?: boolean
@@ -223,10 +242,6 @@ export interface ActivityLog {
   restaurantId?: string
   description: string
   timestamp: Date | null
-}
-
-export interface SiteSettings {
-  demoFallback: boolean
 }
 
 export interface Favorite {

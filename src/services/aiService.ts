@@ -1,4 +1,4 @@
-import type { CategoryId, CuisineId, Lang, MenuCategoryData, PriceLevel } from '../data/types'
+import type { CategoryId, CuisineId, Lang, MenuCategoryData, MenuOptionGroup, PriceLevel } from '../data/types'
 import { estimatePriceLevel } from '../lib/price'
 
 // The AI lives behind Vercel functions (/api/*) so the Gemini key never reaches the browser.
@@ -145,7 +145,7 @@ export async function importMenuFile(file: File): Promise<MenuCategoryData[]> {
   } finally {
     clearTimeout(timer)
   }
-  const payload = (await res.json().catch(() => null)) as { categories?: { name: MenuCategoryData['name']; items: { name: MenuCategoryData['name']; description: MenuCategoryData['name']; price: number }[] }[]; error?: string } | null
+  const payload = (await res.json().catch(() => null)) as { categories?: { name: MenuCategoryData['name']; items: { name: MenuCategoryData['name']; description: MenuCategoryData['name']; price: number; options?: Omit<MenuOptionGroup, 'id'>[] }[] }[]; error?: string } | null
   if (res.status === 413) throw new MenuImportError('too_large')
   if (res.status === 403) throw new MenuImportError('forbidden')
   if (res.status === 429) throw new MenuImportError('rate_limited')
@@ -155,7 +155,14 @@ export async function importMenuFile(file: File): Promise<MenuCategoryData[]> {
   return payload.categories.map((c) => ({
     id: id('cat'),
     name: c.name,
-    items: c.items.map((i) => ({ id: id('item'), name: i.name, description: i.description, price: i.price, available: true })),
+    items: c.items.map((i) => ({
+      id: id('item'),
+      name: i.name,
+      description: i.description,
+      price: i.price,
+      available: true,
+      ...(i.options?.length ? { options: i.options.map((g) => ({ ...g, id: id('grp'), options: g.options.map((o) => ({ ...o, id: id('opt') })) })) } : {}),
+    })),
   }))
 }
 

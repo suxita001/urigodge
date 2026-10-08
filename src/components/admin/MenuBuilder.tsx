@@ -10,6 +10,8 @@ import { TextArea, TextInput, Toggle } from '../ui/Inputs'
 import { ImageUploader } from './ImageUploader'
 import { EmptyState } from './AdminUI'
 import MenuImport from './MenuImport'
+import OptionsEditor, { fromDraftGroups, toDraftGroups } from './OptionsEditor'
+import { basePrice, optionGroups, priceVaries } from '../../lib/menuOptions'
 
 interface MenuBuilderProps {
   restaurantId: string
@@ -232,7 +234,10 @@ function ItemRow({ item, first, last, onMove, onEdit, onDelete }: { item: MenuIt
           {item.name.ka || item.name.en || 'უსახელო კერძი'}
         </span>
         <span className="flex items-center gap-2 text-[12.5px]">
-          <span className="font-bold text-green">{item.price.toFixed(2)} ₾</span>
+          <span className="font-bold text-green">
+            {basePrice(item).toFixed(2)} ₾{priceVaries(item) ? '-დან' : ''}
+          </span>
+          {optionGroups(item).length > 0 && <span className="px-1.5 py-0.5 rounded-md bg-green-light text-green font-semibold">{optionGroups(item).length} ოფცია</span>}
           {unavailable && <span className="px-1.5 py-0.5 rounded-md bg-cream-2 text-ink-faint font-semibold">მიუწვდომელია</span>}
         </span>
       </button>
@@ -309,13 +314,18 @@ function ItemModal({
 function ItemForm({ restaurantId, initial, onCancel, onSave }: { restaurantId: string; initial: MenuItem; onCancel: () => void; onSave: (item: MenuItem) => void }) {
   const [item, setItem] = useState<MenuItem>(initial)
   const [price, setPrice] = useState(initial.price ? String(initial.price) : '')
+  const [groups, setGroups] = useState(() => toDraftGroups(initial.options))
   const [submitted, setSubmitted] = useState(false)
   const set = (patch: Partial<MenuItem>) => setItem((i) => ({ ...i, ...patch }))
 
+  // Sizes carry their own prices, so the single price field is not asked for.
+  const hasVariants = groups.some((g) => g.kind === 'variant')
+  const parsed = fromDraftGroups(groups)
   const priceNum = Number(price.replace(',', '.'))
   const errors = {
     name: !item.name.ka.trim() ? 'შეიყვანე ქართული სახელი.' : undefined,
-    price: price.trim() === '' || !Number.isFinite(priceNum) || priceNum < 0 ? 'შეიყვანე სწორი ფასი.' : undefined,
+    price: !hasVariants && (price.trim() === '' || !Number.isFinite(priceNum) || priceNum < 0) ? 'შეიყვანე სწორი ფასი.' : undefined,
+    options: 'error' in parsed ? parsed.error : hasVariants && !parsed.groups.some((g) => g.kind === 'variant') ? 'დაამატე მინიმუმ ერთი ზომა ფასით ან წაშალე ზომების ჯგუფი.' : undefined,
   }
 
   return (
@@ -323,12 +333,14 @@ function ItemForm({ restaurantId, initial, onCancel, onSave }: { restaurantId: s
       onSubmit={(e) => {
         e.preventDefault()
         setSubmitted(true)
-        if (errors.name || errors.price) return
+        if (errors.name || errors.price || errors.options || 'error' in parsed) return
+        const variants = parsed.groups.find((g) => g.kind === 'variant')
         onSave({
           ...item,
           name: { ka: item.name.ka.trim(), en: item.name.en.trim() },
           description: { ka: item.description.ka.trim(), en: item.description.en.trim() },
-          price: Math.round(priceNum * 100) / 100,
+          price: variants ? Math.min(...variants.options.map((o) => o.price)) : Math.round(priceNum * 100) / 100,
+          options: parsed.groups.length ? parsed.groups : undefined,
           image: item.image || undefined,
         })
       }}
@@ -343,10 +355,21 @@ function ItemForm({ restaurantId, initial, onCancel, onSave }: { restaurantId: s
         <TextArea label="აღწერა (English)" rows={3} value={item.description.en} onValueChange={(en) => set({ description: { ...item.description, en } })} />
       </div>
       <div className="grid sm:grid-cols-2 gap-4 items-start">
-        <TextInput label="ფასი (₾)" inputMode="decimal" placeholder="0.00" value={price} onValueChange={setPrice} error={submitted ? errors.price : undefined} />
+        {hasVariants ? (
+          <div>
+            <p className="mb-1.5 text-[13px] font-semibold text-ink">ფასი (₾)</p>
+            <p className="h-11 px-3.5 flex items-center rounded-xl border border-dashed border-border text-[13.5px] text-ink-faint">ფასი ზომების მიხედვით — იხ. ქვემოთ</p>
+          </div>
+        ) : (
+          <TextInput label="ფასი (₾)" inputMode="decimal" placeholder="0.00" value={price} onValueChange={setPrice} error={submitted ? errors.price : undefined} />
+        )}
         <div className="sm:pt-8">
           <Toggle checked={item.available !== false} onChange={(v) => set({ available: v })} label="ხელმისაწვდომია" description="გამორთვისას კერძი მენიუში „მიუწვდომელია“ სტატუსით გამოჩნდება." />
         </div>
+      </div>
+      <div className="rounded-2xl border border-border p-3.5 sm:p-4">
+        <OptionsEditor value={groups} onChange={setGroups} />
+        {submitted && errors.options && <p className="mt-2.5 text-[12.5px] font-medium text-terracotta">{errors.options}</p>}
       </div>
       <ImageUploader restaurantId={restaurantId} kind="menu" label="კერძის ფოტო" aspect="aspect-[4/3] sm:max-w-[280px]" value={item.image} onChange={(image) => set({ image })} />
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Search, X, UtensilsCrossed, MapPin, Phone, SearchX } from 'lucide-react'
+import { ArrowLeft, Search, X, UtensilsCrossed, MapPin, Phone, SearchX, Check, SlidersHorizontal } from 'lucide-react'
 import { useRestaurant } from '../hooks/useRestaurants'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useSeo } from '../hooks/useSeo'
@@ -12,8 +12,7 @@ import { menuPath, restaurantPath } from '../lib/site'
 import { venueName } from '../lib/format'
 import { sized, srcSet } from '../lib/image'
 import type { MenuCategoryData, MenuItem } from '../data/types'
-
-const formatPrice = (price: number) => (Number.isInteger(price) ? String(price) : price.toFixed(2))
+import { basePrice, defaultSelection, formatPrice, optionGroups, priceVaries, toggleOption, totalPrice, variantGroup } from '../lib/menuOptions'
 
 function MenuSkeleton() {
   return (
@@ -38,6 +37,8 @@ function ItemCard({ item, onOpen }: { item: MenuItem; onOpen: () => void }) {
   const { t, tx } = useLanguage()
   const unavailable = item.available === false
   const description = tx(item.description)
+  const variants = variantGroup(item)
+  const extras = optionGroups(item).filter((g) => g.kind !== 'variant').length
   return (
     <li>
       <button
@@ -50,8 +51,25 @@ function ItemCard({ item, onOpen }: { item: MenuItem; onOpen: () => void }) {
         <span className="min-w-0 flex-1 flex flex-col">
           <span className="font-bold text-[15.5px] text-ink leading-snug">{tx(item.name)}</span>
           {description && <span className="mt-1 text-[13.5px] text-ink-soft leading-relaxed line-clamp-2">{description}</span>}
-          <span className="mt-auto pt-2.5 flex items-center gap-2">
-            <span className="font-extrabold text-[15.5px] text-green tabular-nums">{formatPrice(item.price)} ₾</span>
+          {variants && (
+            <span className="mt-2 flex flex-wrap gap-1.5">
+              {variants.options.map((o) => (
+                <span key={o.id} className="px-2 py-0.5 rounded-md bg-cream-2 text-[12px] font-semibold text-ink-soft whitespace-nowrap">
+                  {tx(o.name)} <span className="font-bold text-ink tabular-nums">{formatPrice(o.price)}</span>
+                </span>
+              ))}
+            </span>
+          )}
+          <span className="mt-auto pt-2.5 flex flex-wrap items-center gap-2">
+            <span className="font-extrabold text-[15.5px] text-green tabular-nums">
+              {priceVaries(item) ? t('menu_from', { price: formatPrice(basePrice(item)) }) : `${formatPrice(basePrice(item))} ₾`}
+            </span>
+            {extras > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-light text-[11.5px] font-bold text-green">
+                <SlidersHorizontal size={11} />
+                {t('menu_has_options')}
+              </span>
+            )}
             {unavailable && <span className="px-2 py-0.5 rounded-full bg-cream-2 text-[11.5px] font-bold text-ink-faint">{t('menu_unavailable')}</span>}
           </span>
         </span>
@@ -74,6 +92,8 @@ function ItemCard({ item, onOpen }: { item: MenuItem; onOpen: () => void }) {
 
 function ItemSheet({ item, onClose }: { item: MenuItem; onClose: () => void }) {
   const { t, tx } = useLanguage()
+  const groups = optionGroups(item)
+  const [selection, setSelection] = useState(() => defaultSelection(item))
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -104,9 +124,53 @@ function ItemSheet({ item, onClose }: { item: MenuItem; onClose: () => void }) {
         <div className={`p-5 sm:p-6 overflow-y-auto ${item.image ? '' : 'pt-12'}`}>
           <h3 className="text-[20px] font-extrabold text-ink leading-snug">{tx(item.name)}</h3>
           {tx(item.description) && <p className="mt-2 text-[14.5px] text-ink-soft leading-relaxed">{tx(item.description)}</p>}
-          <p className="mt-4 text-[22px] font-extrabold text-green tabular-nums">{formatPrice(item.price)} ₾</p>
+          {groups.length === 0 && <p className="mt-4 text-[22px] font-extrabold text-green tabular-nums">{formatPrice(item.price)} ₾</p>}
           {item.available === false && <p className="mt-1 text-[13px] font-bold text-ink-faint">{t('menu_unavailable')}</p>}
+
+          {groups.map((group) => (
+            <fieldset key={group.id} className="mt-5">
+              <legend className="flex items-baseline gap-2 mb-2">
+                <span className="text-[14.5px] font-extrabold text-ink">{tx(group.name)}</span>
+                <span className="text-[12px] font-semibold text-ink-faint">{group.kind === 'addon' ? t('menu_pick_any') : t('menu_pick_one')}</span>
+              </legend>
+              <div className="flex flex-col gap-1.5">
+                {group.options.map((option) => {
+                  const selected = selection[group.id]?.includes(option.id) ?? false
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role={group.kind === 'addon' ? 'checkbox' : 'radio'}
+                      aria-checked={selected}
+                      onClick={() => setSelection((s) => toggleOption(s, group, option.id))}
+                      className={`flex items-center gap-3 px-3.5 h-12 rounded-xl border text-left transition-colors ${
+                        selected ? 'border-green bg-green-light' : 'border-border bg-white hover:border-green/50'
+                      }`}
+                    >
+                      <span
+                        className={`w-5 h-5 shrink-0 flex items-center justify-center border-2 transition-colors ${group.kind === 'addon' ? 'rounded-md' : 'rounded-full'} ${
+                          selected ? 'border-green bg-green text-cream' : 'border-border'
+                        }`}
+                      >
+                        {selected && <Check size={13} strokeWidth={3.5} />}
+                      </span>
+                      <span className="flex-1 min-w-0 truncate text-[14.5px] font-semibold text-ink">{tx(option.name)}</span>
+                      <span className={`text-[14px] font-bold tabular-nums whitespace-nowrap ${option.price > 0 ? 'text-ink' : 'text-ink-faint'}`}>
+                        {group.kind === 'variant' ? `${formatPrice(option.price)} ₾` : option.price > 0 ? `+${formatPrice(option.price)} ₾` : t('menu_included')}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
+          ))}
         </div>
+        {groups.length > 0 && (
+          <div className="shrink-0 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-t border-border bg-cream/60">
+            <span className="text-[14px] font-bold text-ink-soft">{t('menu_total')}</span>
+            <span className="text-[24px] font-extrabold text-green tabular-nums leading-none">{formatPrice(totalPrice(item, selection))} ₾</span>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   )

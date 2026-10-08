@@ -9,7 +9,6 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch,
   type Timestamp,
 } from 'firebase/firestore'
 import { auth, db } from '../lib/firebase'
@@ -144,8 +143,6 @@ export function subscribeRestaurant(id: string, onChange: (r: Restaurant | null)
   )
 }
 
-export const loadDemoRestaurants = () => import('../data/demoRestaurants').then((m) => m.demoRestaurants)
-
 // ---- Writes (authorization enforced by firestore.rules) ----
 
 export async function restaurantExists(id: string): Promise<boolean> {
@@ -202,27 +199,4 @@ export async function deleteRestaurant(restaurant: Pick<Restaurant, 'id' | 'name
     restaurantId: restaurant.id,
     description: `წაიშალა რესტორანი „${restaurant.name}“`,
   })
-}
-
-/** Seeds Firestore with the bundled demo dataset (doc ID = slug). Existing docs with the same slug are overwritten. */
-export async function importDemoRestaurants(): Promise<number> {
-  const demo = await loadDemoRestaurants()
-  const batch = writeBatch(db)
-  demo.forEach((r) => {
-    batch.set(restaurantRef(r.slug), {
-      ...toRestaurantDoc(r),
-      status: 'published',
-      createdBy: auth.currentUser?.uid ?? '',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
-  })
-  await batch.commit()
-  await logActivity({
-    action: 'RESTAURANT_CREATED',
-    targetType: 'restaurant',
-    targetId: 'demo-import',
-    description: `დემო მონაცემებიდან იმპორტირდა ${demo.length} რესტორანი`,
-  })
-  return demo.length
 }
