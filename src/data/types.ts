@@ -138,6 +138,18 @@ export interface SocialLinks {
   facebook?: string
 }
 
+/** Where an admin chose to show a place on the home page. Managers cannot change this. */
+export interface HomePlacement {
+  /** Listed under "Featured places". */
+  featured?: boolean
+  /** One of the photos in the full-screen banner. */
+  banner?: boolean
+  /** Banner artwork (16:9); the cover photo is used when empty. */
+  bannerImage?: string
+  /** Banner artwork for phones (9:16); falls back to `bannerImage`, then the cover photo. */
+  bannerImageMobile?: string
+}
+
 export type RestaurantStatus = 'published' | 'draft'
 
 export interface Restaurant {
@@ -165,6 +177,7 @@ export interface Restaurant {
   features: string[]
   qrEnabled: boolean
   popularity: number
+  home: HomePlacement
   logo?: string
   status: RestaurantStatus
   updatedAt?: Date | null
@@ -249,7 +262,7 @@ export interface Favorite {
   createdAt: Date | null
 }
 
-export type ImageKind = 'cover' | 'gallery' | 'menu' | 'logo'
+export type ImageKind = 'cover' | 'gallery' | 'menu' | 'logo' | 'banner'
 
 // Shape of a document in the Firestore `restaurants` collection. The document ID should equal `slug`.
 // Timestamps are typed loosely because they are FieldValue on write and Timestamp on read.
@@ -276,6 +289,7 @@ export interface RestaurantDoc {
   features: string[]
   qrEnabled: boolean
   popularity?: number
+  home?: HomePlacement
   status?: RestaurantStatus
   createdAt?: unknown
   updatedAt?: unknown

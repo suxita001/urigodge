@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, ExternalLink, Info, MapPin, Clock3, Images, UtensilsCrossed, GitBranch, UserCog, Save, Undo2, ShieldAlert, UserMinus, Plus, Store } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Info, MapPin, Clock3, Images, UtensilsCrossed, GitBranch, UserCog, Save, Undo2, ShieldAlert, UserMinus, Plus, Store, Star } from 'lucide-react'
 import type { Branch, Restaurant, UserProfile } from '../../data/types'
 import { useAuth } from '../../hooks/useAuth'
 import { useInvitations, useManagedRestaurant, useManagedRestaurants, useUsers } from '../../hooks/useAdmin'
@@ -18,6 +18,7 @@ import {
   BasicInfoFields,
   ContactFields,
   HoursFields,
+  HomeFields,
   LocationFields,
   PhotosFields,
   SectionTitle,
@@ -35,7 +36,7 @@ import Button from '../../components/ui/Button'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import Avatar from '../../components/ui/Avatar'
 
-type Tab = 'info' | 'location' | 'hours' | 'photos' | 'menu' | 'branches' | 'managers'
+type Tab = 'info' | 'location' | 'hours' | 'photos' | 'menu' | 'branches' | 'home' | 'managers'
 
 const FIELD_LABELS: Partial<Record<keyof Draft, string>> = {
   name: 'სახელი',
@@ -54,6 +55,7 @@ const FIELD_LABELS: Partial<Record<keyof Draft, string>> = {
   coordinates: 'ლოკაცია',
   openingHours: 'სამუშაო საათები',
   coverImage: 'მთავარი ფოტო',
+  home: 'მთავარ გვერდზე ჩვენება',
   logo: 'ლოგო',
   images: 'გალერეა',
 }
@@ -95,7 +97,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     { id: 'photos', label: 'ფოტოები', icon: Images },
     { id: 'menu', label: 'მენიუ', icon: UtensilsCrossed },
     { id: 'branches', label: 'ფილიალები', icon: GitBranch },
-    ...(isAdmin ? [{ id: 'managers' as Tab, label: 'მენეჯერები', icon: UserCog }] : []),
+    ...(isAdmin ? [{ id: 'home' as Tab, label: 'მთავარი გვერდი', icon: Star }, { id: 'managers' as Tab, label: 'მენეჯერები', icon: UserCog }] : []),
   ]
 
   // ---- Shared draft for the info / location / hours / photos tabs ----
@@ -121,7 +123,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     }
     const clean = cleanDraft(draft)
     const keys = (Object.keys(clean) as (keyof Draft)[]).filter((k) => k !== 'slug' && JSON.stringify(clean[k]) !== JSON.stringify(saved[k]))
-    if (!isAdmin) keys.splice(0, keys.length, ...keys.filter((k) => k !== 'status' && k !== 'popularity'))
+    if (!isAdmin) keys.splice(0, keys.length, ...keys.filter((k) => k !== 'status' && k !== 'popularity' && k !== 'home'))
     if (keys.length === 0) {
       setDraft(null)
       return
@@ -162,7 +164,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     }
   }
 
-  const barVisible = (['info', 'location', 'hours', 'photos'].includes(tab) && dirty) || (tab === 'menu' && menu.dirty)
+  const barVisible = (['info', 'location', 'hours', 'photos', 'home'].includes(tab) && dirty) || (tab === 'menu' && menu.dirty)
 
   return (
     <div className={barVisible ? 'pb-24' : ''}>
@@ -255,6 +257,12 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
               <>
                 <SectionTitle title="ფილიალები" description="ცვლილებები ინახება მაშინვე." />
                 <BranchManager restaurant={restaurant} value={restaurant.branches} onChange={onBranchesChange} />
+              </>
+            )}
+            {tab === 'home' && isAdmin && (
+              <>
+                <SectionTitle title="მთავარი გვერდი" description="შენ წყვეტ, გამოჩნდება თუ არა ეს ადგილი მთავარ გვერდზე. ამ პარამეტრებს მხოლოდ ადმინისტრატორი ხედავს." />
+                <HomeFields restaurantId={restaurant.id} draft={current} set={set} />
               </>
             )}
             {tab === 'managers' && isAdmin && <ManagersTab restaurant={restaurant} />}

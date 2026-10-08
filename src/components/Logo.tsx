@@ -16,7 +16,7 @@ export default function Logo({ dark = false }: { dark?: boolean }) {
         </>
       )}
       <span className={`text-[19px] font-extrabold tracking-tight ${dark ? 'text-snow' : 'text-ink'}`}>
-        urigod<span className="text-green">.ge</span>
+        urigod<span className={dark ? 'text-[#9cc5a1]' : 'text-green'}>.ge</span>
       </span>
     </Link>
   )

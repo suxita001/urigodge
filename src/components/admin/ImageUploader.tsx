@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { ImagePlus, RefreshCw, Trash2, GripVertical, UploadCloud } from 'lucide-react'
 import type { ImageKind } from '../../data/types'
@@ -42,7 +42,7 @@ interface ImageUploaderProps {
   kind: ImageKind
   value?: string
   onChange: (url: string | undefined) => void
-  label?: string
+  label?: ReactNode
   aspect?: string
   hint?: string
 }

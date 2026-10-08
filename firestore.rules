@@ -188,7 +188,7 @@ service cloud.firestore {
 
       // Managers edit content of their own restaurants but not identity/visibility fields.
       allow update: if managesRestaurant(rid)
-        && !changedKeys().hasAny(['slug', 'status', 'createdAt', 'createdBy', 'popularity']);
+        && !changedKeys().hasAny(['slug', 'status', 'createdAt', 'createdBy', 'popularity', 'home']);
 
       allow delete: if isAdmin();
     }

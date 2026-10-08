@@ -68,6 +68,7 @@ export function fromRestaurantDoc(id: string, data: Partial<RestaurantDoc>): Res
     features: data.features ?? [],
     qrEnabled: !!data.qrEnabled,
     popularity: data.popularity ?? 0,
+    home: data.home ?? {},
     status: data.status === 'draft' ? 'draft' : 'published',
     updatedAt: (data.updatedAt as Timestamp | undefined)?.toDate?.() ?? null,
   }
@@ -99,6 +100,7 @@ export function toRestaurantDoc(r: Restaurant): RestaurantInput {
     features: r.features,
     qrEnabled: r.qrEnabled,
     popularity: r.popularity,
+    home: r.home,
     status: r.status,
   }
 }

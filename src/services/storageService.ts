@@ -2,7 +2,7 @@ import type { ImageKind } from '../data/types'
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
-const MAX_DIMENSION: Record<ImageKind, number> = { cover: 2000, gallery: 1800, menu: 900, logo: 600 }
+const MAX_DIMENSION: Record<ImageKind, number> = { cover: 2000, gallery: 1800, menu: 900, logo: 600, banner: 2560 }
 
 // Cloudinary cloud name and unsigned upload preset are public by design (they only allow
 // uploads into the preset's configured folder/rules, never reads of secrets); the account's
@@ -16,7 +16,7 @@ export interface UploadResult {
   path: string
 }
 
-// Folder layout: restaurants/{restaurantId}/{cover|gallery|menu|logo}/{timestamp}-{name}
+// Folder layout: restaurants/{restaurantId}/{cover|gallery|menu|logo|banner}/{timestamp}-{name}
 export function restaurantImagePath(restaurantId: string, kind: ImageKind, fileName: string): string {
   const safeName = fileName.toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9\-_]/g, '-').slice(0, 40) || 'image'
   return `restaurants/${restaurantId}/${kind}/${Date.now()}-${safeName}`

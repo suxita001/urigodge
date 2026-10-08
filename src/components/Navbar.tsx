@@ -10,6 +10,7 @@ import ThemeToggle from './ThemeToggle'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
+import { useHeroOverlay } from '../lib/heroOverlay'
 import { loginPathFor } from '../utils/redirect'
 
 const links = [
@@ -22,6 +23,8 @@ const links = [
 export default function Navbar() {
   const { t, lang, toggleLang } = useLanguage()
   const [scrolled, setScrolled] = useState(false)
+  const [pastHero, setPastHero] = useState(false)
+  const heroPhoto = useHeroOverlay()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const location = useLocation()
@@ -41,6 +44,8 @@ export default function Navbar() {
   useEffect(() => {
     function onScroll() {
       setScrolled(window.scrollY > 8)
+      // The home banner is one screen tall; the bar turns solid once it has scrolled away.
+      setPastHero(window.scrollY > window.innerHeight - 90)
     }
     onScroll()
     window.addEventListener('scroll', onScroll)
@@ -59,15 +64,20 @@ export default function Navbar() {
     }
   }, [mobileOpen])
 
+  // Over the banner photo the bar is see-through with light text.
+  const glass = heroPhoto && !pastHero && !searchOpen
+  const quiet = glass ? 'text-snow/85 hover:bg-snow/15 hover:text-snow' : 'text-ink-soft hover:bg-cream-2 hover:text-ink'
+  const outline = glass ? 'border-snow/30' : 'border-border'
+
   return (
     <>
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
-          scrolled ? 'bg-white/85 backdrop-blur-md shadow-nav' : 'bg-transparent'
+          glass ? (scrolled ? 'bg-night/45 backdrop-blur-md' : 'bg-transparent') : scrolled ? 'bg-white/85 backdrop-blur-md shadow-nav' : 'bg-transparent'
         }`}
       >
         <nav className="max-w-7xl mx-auto px-5 md:px-8 h-16 md:h-[72px] flex items-center justify-between gap-4">
-          <Logo />
+          <Logo dark={glass} />
 
           <ul className="hidden md:flex items-center gap-1">
             {links.map((link) => (
@@ -77,7 +87,7 @@ export default function Navbar() {
                   end={link.to === '/'}
                   className={({ isActive }) =>
                     `px-4 py-2 rounded-full text-[14.5px] font-semibold transition-colors ${
-                      isActive ? 'text-green bg-green-light' : 'text-ink-soft hover:text-ink hover:bg-cream-2'
+                      glass ? (isActive ? 'text-snow bg-snow/20' : quiet) : isActive ? 'text-green bg-green-light' : 'text-ink-soft hover:text-ink hover:bg-cream-2'
                     }`
                   }
                 >
@@ -90,17 +100,17 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen((v) => !v)}
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-full text-ink-soft hover:bg-cream-2 hover:text-ink transition-colors"
+              className={`hidden md:flex items-center justify-center w-10 h-10 rounded-full transition-colors ${quiet}`}
               aria-label="Search"
             >
               <Search size={19} />
             </button>
 
-            <ThemeToggle className="hidden md:flex" />
+            <ThemeToggle className="hidden md:flex" onPhoto={glass} />
 
             <button
               onClick={toggleLang}
-              className="flex items-center gap-1.5 px-3 h-10 rounded-full border border-border text-[13.5px] font-semibold text-ink-soft hover:bg-cream-2 hover:text-ink transition-colors"
+              className={`flex items-center gap-1.5 px-3 h-10 rounded-full border text-[13.5px] font-semibold transition-colors ${outline} ${quiet}`}
             >
               <span>{lang === 'ka' ? '🇬🇪' : '🇬🇧'}</span>
               <span className={currentUser ? 'hidden sm:inline' : ''}>{lang === 'ka' ? 'ქართული' : 'English'}</span>
@@ -114,7 +124,7 @@ export default function Navbar() {
               <>
                 <Link
                   to={loginHref}
-                  className="hidden md:inline-flex items-center px-4 h-10 rounded-full text-[14px] font-bold text-ink hover:bg-cream-2 transition-colors"
+                  className={`hidden md:inline-flex items-center px-4 h-10 rounded-full text-[14px] font-bold transition-colors ${glass ? 'text-snow hover:bg-snow/15' : 'text-ink hover:bg-cream-2'}`}
                 >
                   {t('nav_login')}
                 </Link>
@@ -129,7 +139,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-ink hover:bg-cream-2 transition-colors"
+              className={`md:hidden flex items-center justify-center w-10 h-10 rounded-full transition-colors ${glass ? 'text-snow hover:bg-snow/15' : 'text-ink hover:bg-cream-2'}`}
               aria-label="Menu"
             >
               <Menu size={22} />

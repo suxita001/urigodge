@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Monitor, Smartphone } from 'lucide-react'
 import type { CuisineId, LocalizedText, PriceLevel } from '../../data/types'
 import { normalizeHours, type RestaurantInput } from '../../services/restaurantService'
 import { categories, cuisines, neighborhoods } from '../../data/categories'
@@ -169,6 +169,61 @@ export function PhotosFields({ restaurantId, draft, set }: { restaurantId: strin
         <GalleryUploader restaurantId={restaurantId} value={draft.images} onChange={(images) => set({ images })} />
         <p className="mt-2 text-[12px] text-ink-faint">გადაათრიე ფოტოები რიგითობის შესაცვლელად. სურათები ავტომატურად იკუმშება ატვირთვამდე.</p>
       </div>
+    </div>
+  )
+}
+
+/** Admin-only: whether the place appears on the home page, and with which banner artwork. */
+export function HomeFields({ restaurantId, draft, set }: { restaurantId: string; draft: Draft; set: SetDraft }) {
+  const home = draft.home ?? {}
+  const patch = (p: Partial<NonNullable<Draft['home']>>) => set({ home: { ...home, ...p } })
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-border p-4">
+          <Toggle checked={!!home.featured} onChange={(featured) => patch({ featured })} label="რჩეულ ადგილებში ჩვენება" description="გამოჩნდება მთავარ გვერდზე, „რჩეული ადგილები“ სექციაში." />
+        </div>
+        <div className="rounded-2xl border border-border p-4">
+          <Toggle checked={!!home.banner} onChange={(banner) => patch({ banner })} label="ბანერში ჩვენება" description="მთავარი გვერდის დიდი ფოტო-ბანერი, რომელიც 5 წამში ერთხელ იცვლება." />
+        </div>
+      </div>
+
+      {home.banner && (
+        <div>
+          <p className="text-[13.5px] font-bold text-ink">ბანერის ფოტო</p>
+          <p className="mt-1 mb-4 text-[12.5px] text-ink-faint leading-relaxed max-w-2xl">
+            არ არის სავალდებულო — თუ არაფერს ატვირთავ, ბანერში რესტორნის მთავარი ფოტო გამოჩნდება. ატვირთე ცალკე ფოტო, თუ პრომო ან აქციის სურათი გინდა. ფოტოზე ზემოდან საიტის
+            სათაური და ძებნა ედება, ამიტომ მნიშვნელოვანი ტექსტი და ლოგო შუაში ნუ იქნება.
+          </p>
+          <div className="grid md:grid-cols-[1.9fr_1fr] gap-5 items-start">
+            <ImageUploader
+              restaurantId={restaurantId}
+              kind="banner"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <Monitor size={14} /> კომპიუტერისთვის — 1920 × 1080 px (16:9)
+                </span>
+              }
+              value={home.bannerImage}
+              onChange={(bannerImage) => patch({ bannerImage })}
+              hint="ჰორიზონტალური ფოტო. JPG ან PNG, 5 MB-მდე."
+            />
+            <ImageUploader
+              restaurantId={restaurantId}
+              kind="banner"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <Smartphone size={14} /> ტელეფონისთვის — 1080 × 1920 px (9:16)
+                </span>
+              }
+              aspect="aspect-[9/16] max-w-[220px]"
+              value={home.bannerImageMobile}
+              onChange={(bannerImageMobile) => patch({ bannerImageMobile })}
+              hint="ვერტიკალური ფოტო. თუ არ ატვირთავ, კომპიუტერის ფოტო შუიდან ჩამოიჭრება."
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -23,7 +23,7 @@ function readCache(): Restaurant[] | null {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const list = JSON.parse(raw) as Restaurant[]
-    return Array.isArray(list) && list.length ? list.map((r) => ({ ...r, updatedAt: r.updatedAt ? new Date(r.updatedAt) : null })) : null
+    return Array.isArray(list) && list.length ? list.map((r) => ({ ...r, home: r.home ?? {}, updatedAt: r.updatedAt ? new Date(r.updatedAt) : null })) : null
   } catch {
     return null
   }

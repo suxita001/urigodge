@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Search, MapPin, ScrollText, Sparkles, UtensilsCrossed } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import HeroSlideshow from '../components/HeroSlideshow'
+import { setHeroOverlay } from '../lib/heroOverlay'
 import CategoryPill from '../components/CategoryPill'
 import RestaurantGrid from '../components/RestaurantGrid'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -20,7 +21,12 @@ export default function Home() {
     path: '/',
     jsonLd: websiteJsonLd(),
   })
-  const featured = useMemo(() => [...restaurants].sort((a, b) => b.popularity - a.popularity).slice(0, 6), [restaurants])
+  const byPopularity = useMemo(() => [...restaurants].sort((a, b) => b.popularity - a.popularity), [restaurants])
+  // "Featured places" are the ones an admin ticked; until any are ticked the most popular fill in.
+  const featured = useMemo(() => {
+    const picked = byPopularity.filter((r) => r.home.featured)
+    return (picked.length ? picked : byPopularity).slice(0, 6)
+  }, [byPopularity])
 
   const stats = useMemo(() => {
     const areas = new Set(restaurants.map((r) => r.neighborhood))
@@ -36,14 +42,20 @@ export default function Home() {
 
   const empty = !loading && restaurants.length === 0
 
-  // The hero backdrop: the five most popular places that have a photo. Without any, the plain hero is shown.
-  const slides = useMemo(() => featured.filter((r) => r.coverImage).slice(0, 5), [featured])
+  // The hero banner shows only places an admin ticked for it. Without any, the plain hero is shown.
+  const slides = useMemo(() => byPopularity.filter((r) => r.home.banner && (r.home.bannerImage || r.coverImage)).slice(0, 6), [byPopularity])
   const onPhoto = slides.length > 0
+
+  // The navbar floats over the photo instead of sitting above it.
+  useEffect(() => {
+    setHeroOverlay(onPhoto)
+    return () => setHeroOverlay(false)
+  }, [onPhoto])
 
   return (
     <div>
       {/* Hero */}
-      <section className={onPhoto ? 'relative isolate overflow-hidden mx-3 md:mx-6 mt-1 rounded-[28px] md:rounded-[36px]' : 'relative overflow-hidden'}>
+      <section className={onPhoto ? 'relative isolate overflow-hidden -mt-16 md:-mt-[72px] min-h-[100svh] flex flex-col justify-center' : 'relative overflow-hidden'}>
         {onPhoto && <HeroSlideshow slides={slides} />}
         <div className={onPhoto ? 'hidden' : 'absolute inset-0 -z-10'}>
           <div className="absolute -top-32 -right-32 w-[520px] h-[520px] rounded-full bg-green-light blur-3xl opacity-70" />
@@ -60,7 +72,7 @@ export default function Home() {
           />
         </div>
 
-        <div className={`max-w-7xl mx-auto px-5 md:px-8 pt-12 md:pt-20 ${onPhoto ? 'pb-24 md:pb-28' : 'pb-12 md:pb-16'}`}>
+        <div className={`w-full max-w-7xl mx-auto px-5 md:px-8 ${onPhoto ? 'pt-20 md:pt-24 pb-32 sm:pb-24' : 'pt-12 md:pt-20 pb-12 md:pb-16'}`}>
           <div className="max-w-3xl mx-auto text-center">
             <motion.span
               initial={{ opacity: 0, y: 10 }}
@@ -83,7 +95,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.1, ease: 'easeOut' }}
-              className={`mt-5 text-[16px] md:text-[18px] leading-relaxed max-w-xl mx-auto ${onPhoto ? 'text-snow/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]' : 'text-ink-soft'}`}
+              className={`mt-5 text-[16px] md:text-[18px] leading-relaxed max-w-xl mx-auto ${onPhoto ? 'hidden sm:block [@media(max-height:720px)]:!hidden text-snow/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]' : 'text-ink-soft'}`}
             >
               {t('hero_subtitle')}
             </motion.p>
@@ -96,10 +108,15 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.28, ease: 'easeOut' }}
-              className="mt-6 flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto"
+              className={
+                onPhoto
+                  ? // Phones get one swipeable row so the whole hero fits on the first screen.
+                    'mt-5 flex flex-nowrap sm:flex-wrap items-center sm:justify-center gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 sm:mx-auto sm:px-0 sm:max-w-2xl'
+                  : 'mt-6 flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto'
+              }
             >
               {categories.map((c) => (
-                <Link key={c.id} to={`/restaurants?category=${c.id}`}>
+                <Link key={c.id} to={`/restaurants?category=${c.id}`} className="shrink-0">
                   <CategoryPill category={c} />
                 </Link>
               ))}
@@ -109,7 +126,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.34, ease: 'easeOut' }}
-              className="mt-9 flex flex-wrap items-center justify-center gap-3"
+              className={`flex flex-wrap items-center justify-center gap-3 ${onPhoto ? 'mt-7 sm:mt-9' : 'mt-9'}`}
             >
               <Link to="/restaurants" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-green text-cream font-bold text-[15px] hover:bg-green-dark transition-colors shadow-card">
                 {t('hero_cta_explore')}
@@ -121,7 +138,7 @@ export default function Home() {
             </motion.div>
 
             {stats.places > 0 && (
-              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className={`mt-12 mx-auto max-w-md grid grid-cols-3 divide-x ${onPhoto ? 'divide-snow/25' : 'divide-border'}`}>
+              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className={`mx-auto max-w-md grid-cols-3 divide-x ${onPhoto ? 'mt-9 hidden sm:grid [@media(max-height:860px)]:!hidden divide-snow/25' : 'mt-12 grid divide-border'}`}>
                 {[
                   { n: stats.places, label: t('stat_places') },
                   { n: stats.dishes, label: t('stat_dishes') },
