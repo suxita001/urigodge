@@ -215,3 +215,51 @@ body {
     animation: none;
   }
 }
+
+/* Home hero slideshow: photos cross-fade and drift slowly while they are on screen */
+.hero-slide {
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 1.2s ease;
+  will-change: opacity, transform;
+}
+.hero-slide.is-active {
+  opacity: 1;
+  animation: hero-drift 7s ease-out both;
+}
+@keyframes hero-drift {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+.hero-caption {
+  animation: hero-caption-in 0.5s ease-out both;
+}
+@keyframes hero-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.hero-progress {
+  width: 100%;
+  transform-origin: left;
+  animation: hero-progress 5s linear both;
+}
+.hero-progress.is-paused {
+  animation: none;
+}
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide.is-active,
+  .hero-caption {
+    animation: none;
+  }
+}

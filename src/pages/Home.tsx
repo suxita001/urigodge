@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Search, MapPin, ScrollText, Sparkles, UtensilsCrossed } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
+import HeroSlideshow from '../components/HeroSlideshow'
 import CategoryPill from '../components/CategoryPill'
 import RestaurantGrid from '../components/RestaurantGrid'
 import { useLanguage } from '../i18n/LanguageContext'
 import { categories } from '../data/categories'
 import { areaList, landingPath } from '../../shared/taxonomy'
-import { sized } from '../lib/image'
-import { venueName } from '../lib/format'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { useSeo } from '../hooks/useSeo'
 import { websiteJsonLd } from '../lib/seo'
@@ -37,13 +36,16 @@ export default function Home() {
 
   const empty = !loading && restaurants.length === 0
 
-  const mosaic = useMemo(() => featured.filter((r) => r.coverImage).slice(0, 4), [featured])
+  // The hero backdrop: the five most popular places that have a photo. Without any, the plain hero is shown.
+  const slides = useMemo(() => featured.filter((r) => r.coverImage).slice(0, 5), [featured])
+  const onPhoto = slides.length > 0
 
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10">
+      <section className={onPhoto ? 'relative isolate overflow-hidden mx-3 md:mx-6 mt-1 rounded-[28px] md:rounded-[36px]' : 'relative overflow-hidden'}>
+        {onPhoto && <HeroSlideshow slides={slides} />}
+        <div className={onPhoto ? 'hidden' : 'absolute inset-0 -z-10'}>
           <div className="absolute -top-32 -right-32 w-[520px] h-[520px] rounded-full bg-green-light blur-3xl opacity-70" />
           <div className="absolute top-40 -left-40 w-[420px] h-[420px] rounded-full bg-terracotta-light blur-3xl opacity-50" />
           {/* faint dot grid that fades out toward the edges */}
@@ -58,38 +60,13 @@ export default function Home() {
           />
         </div>
 
-        {/* Floating dish photos, only where there is room for them */}
-        {mosaic.length >= 4 && (
-          <div className="hidden xl:block pointer-events-none" aria-hidden="true">
-            {mosaic.map((r, i) => {
-              const pos = ['left-[3%] top-24 -rotate-6 w-[190px]', 'left-[9%] top-[330px] rotate-3 w-[150px]', 'right-[3%] top-28 rotate-6 w-[180px]', 'right-[8%] top-[340px] -rotate-3 w-[160px]'][i]
-              return (
-                <motion.div
-                  key={r.slug}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: 0.3 + i * 0.1,
-                    ease: 'easeOut',
-                  }}
-                  className={`absolute ${pos} rounded-2xl bg-white p-1.5 shadow-card-hover border border-border`}
-                >
-                  <img src={sized(r.coverImage, 360, 360)} alt="" width={360} height={360} loading="lazy" className="w-full aspect-square object-cover rounded-xl" />
-                  <p className="px-1.5 pt-1.5 pb-0.5 text-[11.5px] font-bold text-ink-soft truncate">{venueName(r, lang)}</p>
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-
-        <div className="max-w-7xl mx-auto px-5 md:px-8 pt-12 md:pt-20 pb-12 md:pb-16">
+        <div className={`max-w-7xl mx-auto px-5 md:px-8 pt-12 md:pt-20 ${onPhoto ? 'pb-24 md:pb-28' : 'pb-12 md:pb-16'}`}>
           <div className="max-w-3xl mx-auto text-center">
             <motion.span
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
-              className="inline-flex items-center gap-1.5 mb-5 px-3.5 py-1.5 rounded-full bg-green-light text-green text-[12.5px] font-bold tracking-wide"
+              className={`inline-flex items-center gap-1.5 mb-5 px-3.5 py-1.5 rounded-full text-[12.5px] font-bold tracking-wide ${onPhoto ? 'bg-snow/15 text-snow backdrop-blur-md border border-snow/20' : 'bg-green-light text-green'}`}
             >
               <Sparkles size={14} />
               {t('hero_badge')}
@@ -98,7 +75,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="text-[34px] leading-[1.15] sm:text-[44px] md:text-[56px] md:leading-[1.1] font-extrabold text-ink tracking-tight text-balance"
+              className={`text-[34px] leading-[1.15] sm:text-[44px] md:text-[56px] md:leading-[1.1] font-extrabold tracking-tight text-balance ${onPhoto ? 'text-snow [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]' : 'text-ink'}`}
             >
               {t('hero_title')}
             </motion.h1>
@@ -106,7 +83,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.1, ease: 'easeOut' }}
-              className="mt-5 text-[16px] md:text-[18px] text-ink-soft leading-relaxed max-w-xl mx-auto"
+              className={`mt-5 text-[16px] md:text-[18px] leading-relaxed max-w-xl mx-auto ${onPhoto ? 'text-snow/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]' : 'text-ink-soft'}`}
             >
               {t('hero_subtitle')}
             </motion.p>
@@ -144,15 +121,15 @@ export default function Home() {
             </motion.div>
 
             {stats.places > 0 && (
-              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className="mt-12 mx-auto max-w-md grid grid-cols-3 divide-x divide-border">
+              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className={`mt-12 mx-auto max-w-md grid grid-cols-3 divide-x ${onPhoto ? 'divide-snow/25' : 'divide-border'}`}>
                 {[
                   { n: stats.places, label: t('stat_places') },
                   { n: stats.dishes, label: t('stat_dishes') },
                   { n: stats.areas, label: t('stat_areas') },
                 ].map((s) => (
                   <div key={s.label} className="px-3">
-                    <dt className="text-[24px] md:text-[28px] font-extrabold text-ink tabular-nums leading-none">{s.n}</dt>
-                    <dd className="mt-1.5 text-[12.5px] text-ink-faint font-medium">{s.label}</dd>
+                    <dt className={`text-[24px] md:text-[28px] font-extrabold tabular-nums leading-none ${onPhoto ? 'text-snow' : 'text-ink'}`}>{s.n}</dt>
+                    <dd className={`mt-1.5 text-[12.5px] font-medium ${onPhoto ? 'text-snow/75' : 'text-ink-faint'}`}>{s.label}</dd>
                   </div>
                 ))}
               </motion.dl>
