@@ -131,7 +131,7 @@ export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
           to={restaurantPath(slide.slug)}
           className="hero-caption group self-start max-w-[calc(100%-72px)] sm:max-w-md min-w-0 flex items-center gap-3 pl-1.5 pr-4 py-1.5 rounded-full bg-night/50 backdrop-blur-md border border-snow/15 text-snow hover:bg-night/70 transition-colors"
         >
-          <img src={sized(slide.logo || slide.coverImage, 96, 96)} alt="" className="keep-bright w-10 h-10 rounded-full object-cover shrink-0 border border-snow/25" />
+          <img src={sized(slide.logo || slide.coverImage || slide.home.bannerImage, 96, 96)} alt="" className="keep-bright w-10 h-10 rounded-full object-cover shrink-0 border border-snow/25" />
           <span className="min-w-0">
             <span className="block text-[14.5px] font-bold leading-tight truncate">{venueName(slide, lang)}</span>
             {area && (

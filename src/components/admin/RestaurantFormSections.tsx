@@ -9,6 +9,7 @@ import HoursEditor from './HoursEditor'
 import LocationPicker from './LocationPicker'
 import { aiPriceLevel } from '../../services/aiService'
 import { priceLabel, priceSymbol } from '../../lib/format'
+import { MAX_FEATURED } from '../../lib/site'
 
 export type Draft = RestaurantInput
 export type SetDraft = (patch: Partial<Draft>) => void
@@ -174,14 +175,22 @@ export function PhotosFields({ restaurantId, draft, set }: { restaurantId: strin
 }
 
 /** Admin-only: whether the place appears on the home page, and with which banner artwork. */
-export function HomeFields({ restaurantId, draft, set }: { restaurantId: string; draft: Draft; set: SetDraft }) {
+export function HomeFields({ restaurantId, draft, set, featuredElsewhere }: { restaurantId: string; draft: Draft; set: SetDraft; featuredElsewhere: number }) {
   const home = draft.home ?? {}
   const patch = (p: Partial<NonNullable<Draft['home']>>) => set({ home: { ...home, ...p } })
+  const featuredFull = !home.featured && featuredElsewhere >= MAX_FEATURED
   return (
     <div className="flex flex-col gap-6">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-border p-4">
-          <Toggle checked={!!home.featured} onChange={(featured) => patch({ featured })} label="რჩეულ ადგილებში ჩვენება" description="გამოჩნდება მთავარ გვერდზე, „რჩეული ადგილები“ სექციაში." />
+          <Toggle
+            checked={!!home.featured}
+            onChange={(featured) => patch({ featured })}
+            disabled={featuredFull}
+            label="რჩეულ ადგილებში ჩვენება"
+            description={`გამოჩნდება მთავარ გვერდზე, „რჩეული ადგილები“ სექციაში. ახლა მონიშნულია ${featuredElsewhere + (home.featured ? 1 : 0)} / ${MAX_FEATURED}.`}
+          />
+          {featuredFull && <p className="mt-2.5 text-[12.5px] font-semibold text-terracotta">უკვე {MAX_FEATURED} ადგილია მონიშნული — ჯერ რომელიმეს მოუხსენი მონიშვნა.</p>}
         </div>
         <div className="rounded-2xl border border-border p-4">
           <Toggle checked={!!home.banner} onChange={(banner) => patch({ banner })} label="ბანერში ჩვენება" description="მთავარი გვერდის დიდი ფოტო-ბანერი, რომელიც 5 წამში ერთხელ იცვლება." />

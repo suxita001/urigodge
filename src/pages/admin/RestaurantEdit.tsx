@@ -111,6 +111,8 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
   const dirty = changedKeys.length > 0
 
   const menu = useMenu(restaurant)
+  const { restaurants: allRestaurants } = useManagedRestaurants()
+  const featuredElsewhere = allRestaurants.filter((r) => r.id !== restaurant.id && r.home.featured && r.status === 'published').length
 
   async function saveDraft() {
     if (!draft) return
@@ -262,7 +264,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
             {tab === 'home' && isAdmin && (
               <>
                 <SectionTitle title="მთავარი გვერდი" description="შენ წყვეტ, გამოჩნდება თუ არა ეს ადგილი მთავარ გვერდზე. ამ პარამეტრებს მხოლოდ ადმინისტრატორი ხედავს." />
-                <HomeFields restaurantId={restaurant.id} draft={current} set={set} />
+                <HomeFields restaurantId={restaurant.id} draft={current} set={set} featuredElsewhere={featuredElsewhere} />
               </>
             )}
             {tab === 'managers' && isAdmin && <ManagersTab restaurant={restaurant} />}

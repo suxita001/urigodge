@@ -9,35 +9,26 @@ import CategoryPill from '../components/CategoryPill'
 import RestaurantGrid from '../components/RestaurantGrid'
 import { useLanguage } from '../i18n/LanguageContext'
 import { categories } from '../data/categories'
-import { areaList, landingPath } from '../../shared/taxonomy'
+import { MAX_FEATURED } from '../lib/site'
 import { useRestaurants } from '../hooks/useRestaurants'
 import { useSeo } from '../hooks/useSeo'
 import { websiteJsonLd } from '../lib/seo'
 
 export default function Home() {
-  const { t, lang } = useLanguage()
+  const { t } = useLanguage()
   const { restaurants, loading } = useRestaurants()
   useSeo(t('seo_home_title'), t('seo_home_description'), {
     path: '/',
     jsonLd: websiteJsonLd(),
   })
   const byPopularity = useMemo(() => [...restaurants].sort((a, b) => b.popularity - a.popularity), [restaurants])
-  // "Featured places" are the ones an admin ticked; until any are ticked the most popular fill in.
-  const featured = useMemo(() => {
-    const picked = byPopularity.filter((r) => r.home.featured)
-    return (picked.length ? picked : byPopularity).slice(0, 6)
-  }, [byPopularity])
+  // "Featured places" are only the ones an admin ticked — nothing shows up here on its own.
+  const featured = useMemo(() => byPopularity.filter((r) => r.home.featured).slice(0, MAX_FEATURED), [byPopularity])
 
   const stats = useMemo(() => {
     const areas = new Set(restaurants.map((r) => r.neighborhood))
     const dishes = restaurants.reduce((sum, r) => sum + r.menu.reduce((n, c) => n + c.items.length, 0), 0)
     return { places: restaurants.length, dishes, areas: areas.size }
-  }, [restaurants])
-
-  const areaCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const r of restaurants) counts.set(r.neighborhood, (counts.get(r.neighborhood) ?? 0) + 1)
-    return counts
   }, [restaurants])
 
   const empty = !loading && restaurants.length === 0
@@ -201,7 +192,7 @@ export default function Home() {
       )}
 
       {/* Featured */}
-      {!empty && (
+      {featured.length > 0 && (
         <>
           <section className="max-w-7xl mx-auto px-5 md:px-8 py-14 md:py-20">
             <div className="flex items-end justify-between mb-8 gap-4">
@@ -222,29 +213,6 @@ export default function Home() {
                 {t('featured_view_all')}
                 <ArrowRight size={15} />
               </Link>
-            </div>
-          </section>
-
-          {/* Areas */}
-          <section className="max-w-7xl mx-auto px-5 md:px-8 pb-6 md:pb-10">
-            <h2 className="text-[24px] md:text-[30px] font-extrabold text-ink tracking-tight">{t('areas_title')}</h2>
-            <p className="mt-1.5 text-[14.5px] text-ink-soft">{t('areas_subtitle')}</p>
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {areaList
-                .filter((a) => areaCounts.has(a.id))
-                .sort((a, b) => (areaCounts.get(b.id) ?? 0) - (areaCounts.get(a.id) ?? 0))
-                .map((a) => (
-                  <Link
-                    key={a.id}
-                    to={landingPath('area', a.id)}
-                    className="group inline-flex items-center gap-2 pl-4 pr-2.5 h-11 rounded-full border border-border bg-white text-[14.5px] font-semibold text-ink hover:border-green hover:text-green transition-colors"
-                  >
-                    {a.label[lang]}
-                    <span className="min-w-6 h-6 px-1.5 rounded-full bg-cream-2 group-hover:bg-green-light text-[12px] font-bold text-ink-soft group-hover:text-green flex items-center justify-center tabular-nums transition-colors">
-                      {areaCounts.get(a.id)}
-                    </span>
-                  </Link>
-                ))}
             </div>
           </section>
         </>

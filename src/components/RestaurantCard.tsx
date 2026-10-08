@@ -29,7 +29,7 @@ export default function RestaurantCard({ restaurant, index = 0 }: { restaurant: 
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-cream-2">
           <img
-            src={sized(restaurant.coverImage, 480, 360)}
+            src={sized(restaurant.coverImage, 480, 360) || undefined}
             srcSet={srcSet(restaurant.coverImage, 480, 360)}
             alt={venueName(restaurant, lang)}
             width={480}
