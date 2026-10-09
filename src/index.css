@@ -60,6 +60,25 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Nothing may push the page wider than the screen, so it can never be dragged sideways. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* iPhones zoom the whole page in when a focused field has text smaller than 16px, and leave it
+   zoomed afterwards — which is what makes a page "slide around" with half of it cut off. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 body,

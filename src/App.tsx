@@ -2,6 +2,7 @@ import { useEffect, Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { LanguageProvider } from './i18n/LanguageContext'
 import { ThemeProvider } from './context/ThemeContext'
+import PageViewTracker from './components/PageViewTracker'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import { RestaurantsProvider } from './context/RestaurantsContext'
@@ -98,6 +99,7 @@ function PublicLayout() {
       </main>
       {pathname !== '/map' && <Footer />}
       <ChatWidget />
+      <PageViewTracker />
     </div>
   )
 }

@@ -58,8 +58,8 @@ export default function LocationPicker({ value, onChange }: { value: Coordinates
         <Crosshair size={14} /> დააჭირე რუკაზე ან გადაათრიე პინი ზუსტი ლოკაციის ასარჩევად.
       </p>
       <div className="h-[280px] md:h-[340px] rounded-2xl overflow-hidden border border-border">
-        <MapContainer center={[value.lat, value.lng]} zoom={15} scrollWheelZoom className="w-full h-full">
-          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <MapContainer center={[value.lat, value.lng]} zoom={15} minZoom={6} maxZoom={19} bounceAtZoomLimits={false} scrollWheelZoom className="w-full h-full">
+          <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} maxNativeZoom={19} />
           <ClickHandler onPick={onChange} />
           <Recenter value={value} />
           <Marker

@@ -11,6 +11,7 @@ import type { LogCategory, Restaurant } from '../../data/types'
 import ActivityFeed, { CategoryChips } from '../../components/admin/ActivityFeed'
 import { Card, EmptyState, PageHeader, StatCard, StatusBadge } from '../../components/admin/AdminUI'
 import { Select } from '../../components/ui/Inputs'
+import VisitsCard from '../../components/admin/VisitsCard'
 
 function useRecentSince() {
   const [since] = useState(() => new Date(Date.now() - RECENT_WINDOW_MS))
@@ -49,6 +50,8 @@ function AdminOverview() {
         <StatCard index={3} icon={ShieldCheck} label="ადმინები" value={stats?.admins ?? null} tone="ink" />
         <StatCard index={4} icon={History} label="აქტივობები (72 სთ)" value={stats?.recentActivities ?? null} />
       </div>
+
+      <VisitsCard />
 
       <Card className="mt-6 md:mt-8 overflow-hidden">
         <div className="px-4 md:px-5 pt-5 pb-3 flex flex-col gap-3 border-b border-border">

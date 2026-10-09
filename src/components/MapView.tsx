@@ -63,6 +63,13 @@ interface MapViewProps {
 }
 
 const TBILISI_CENTER: Coordinates = { lat: 41.7025, lng: 44.7925 }
+const MIN_ZOOM = 7
+const MAX_ZOOM = 19
+// Georgia with a generous margin; panning further only shows places the site does not cover.
+const GEORGIA_BOUNDS: [[number, number], [number, number]] = [
+  [39.6, 38.6],
+  [44.8, 48.2],
+]
 
 export default function MapView({
   restaurants,
@@ -84,6 +91,13 @@ export default function MapView({
         zoom={zoom}
         scrollWheelZoom
         zoomControl={false}
+        // Hard stops at both ends: without them a pinch past the limit stretches the map and then
+        // snaps back, which feels like the zoom is broken. 19 is the closest OpenStreetMap draws.
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
+        bounceAtZoomLimits={false}
+        maxBounds={GEORGIA_BOUNDS}
+        maxBoundsViscosity={0.85}
         className="w-full h-full"
         ref={mapRef}
       >
@@ -91,6 +105,9 @@ export default function MapView({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           keepBuffer={4}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          maxNativeZoom={MAX_ZOOM}
         />
         <FlyToController target={focusTarget} zoom={focusZoom} />
         {userLocation && (
