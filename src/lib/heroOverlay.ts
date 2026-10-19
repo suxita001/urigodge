@@ -1,12 +1,14 @@
 import { useSyncExternalStore } from 'react'
 
-// The home page tells the navbar when a full-screen photo sits underneath it, so the bar can go
-// see-through with light text instead of drawing a cream strip across the picture.
+// The home page tells the navbar what sits underneath it: `dark` artwork (the bar goes see-through
+// with light text), `light` artwork (a frosted bar with normal text), or nothing (the usual bar).
 
-let active = false
+export type HeroTone = 'dark' | 'light' | null
+
+let active: HeroTone = null
 const listeners = new Set<() => void>()
 
-export function setHeroOverlay(value: boolean) {
+export function setHeroOverlay(value: HeroTone) {
   if (active === value) return
   active = value
   listeners.forEach((fn) => fn())

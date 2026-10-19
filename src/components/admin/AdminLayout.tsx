@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   Crown,
   type LucideIcon,
+  GalleryHorizontal,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import UserMenu from '../UserMenu'
@@ -37,6 +38,7 @@ function useNavItems(): NavItem[] {
     return [
       { to: '/admin', label: 'მთავარი დაფა', icon: LayoutDashboard, match: (p) => p === '/admin' },
       { to: '/admin/restaurants', label: 'რესტორნები', icon: Store },
+      { to: '/admin/banner', label: 'მთავარი ბანერი', icon: GalleryHorizontal },
       { to: '/admin/users', label: 'მომხმარებლები', icon: Users },
       { to: '/admin/managers', label: 'რესტორნის მენეჯერები', icon: UserCog },
       { to: '/admin/admins', label: 'ადმინები', icon: ShieldCheck },

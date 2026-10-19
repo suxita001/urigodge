@@ -39,6 +39,7 @@ const Managers = lazy(() => import('./pages/admin/Managers'))
 const Admins = lazy(() => import('./pages/admin/Admins'))
 const Logs = lazy(() => import('./pages/admin/Logs'))
 const Settings = lazy(() => import('./pages/admin/Settings'))
+const HomeBanner = lazy(() => import('./pages/admin/HomeBanner'))
 
 // The map and restaurant pages are separate chunks; fetching them once the browser is idle makes
 // the first click on them feel instant.
@@ -169,6 +170,7 @@ export default function App() {
                       <Route path="admins" element={adminOnly(<Admins />)} />
                       <Route path="logs" element={<Logs />} />
                       <Route path="settings" element={adminOnly(<Settings />)} />
+                      <Route path="banner" element={adminOnly(<HomeBanner />)} />
                       <Route path="*" element={<Navigate to="/admin" replace />} />
                     </Route>
                     <Route path="/dashboard/*" element={<Navigate to="/admin" replace />} />

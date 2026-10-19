@@ -65,7 +65,8 @@ export default function Navbar() {
   }, [mobileOpen])
 
   // Over the banner photo the bar is see-through with light text.
-  const glass = heroPhoto && !pastHero && !searchOpen
+  const glass = heroPhoto === 'dark' && !pastHero && !searchOpen
+  const frosted = heroPhoto === 'light' && !pastHero && !searchOpen
   const quiet = glass ? 'text-snow/85 hover:bg-snow/15 hover:text-snow' : 'text-ink-soft hover:bg-cream-2 hover:text-ink'
   const outline = glass ? 'border-snow/30' : 'border-border'
 
@@ -73,7 +74,7 @@ export default function Navbar() {
     <>
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
-          glass ? (scrolled ? 'bg-night/45 backdrop-blur-md' : 'bg-transparent') : scrolled ? 'bg-white/85 backdrop-blur-md shadow-nav' : 'bg-transparent'
+          glass ? (scrolled ? 'bg-night/45 backdrop-blur-md' : 'bg-transparent') : frosted ? 'bg-cream/75 backdrop-blur-md' : scrolled ? 'bg-white/85 backdrop-blur-md shadow-nav' : 'bg-transparent'
         }`}
       >
         <nav className="max-w-7xl mx-auto px-5 md:px-8 h-16 md:h-[72px] flex items-center justify-between gap-4">

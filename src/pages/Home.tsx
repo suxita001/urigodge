@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Search, MapPin, ScrollText, Sparkles, UtensilsCrossed } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
-import HeroSlideshow from '../components/HeroSlideshow'
+import HeroSlideshow, { slideTone, type HeroSlide } from '../components/HeroSlideshow'
+import { hasCachedSlides, readCachedSlides, subscribeBrandSlides, type BrandSlide } from '../services/homeService'
 import { setHeroOverlay } from '../lib/heroOverlay'
 import CategoryPill from '../components/CategoryPill'
 import RestaurantGrid from '../components/RestaurantGrid'
@@ -33,21 +34,38 @@ export default function Home() {
 
   const empty = !loading && restaurants.length === 0
 
-  // The hero banner shows only places an admin ticked for it. Without any, the plain hero is shown.
-  const slides = useMemo(() => byPopularity.filter((r) => r.home.banner && (r.home.bannerImage || r.coverImage)).slice(0, 6), [byPopularity])
-  const onPhoto = slides.length > 0
+  // The banner opens with urigod's own artwork (admin → "Home banner"), then the places an admin
+  // ticked for it. Without either, the plain hero is shown.
+  const [brand, setBrand] = useState<BrandSlide[] | null>(() => (hasCachedSlides() ? readCachedSlides() : null))
+  useEffect(() => subscribeBrandSlides(setBrand), [])
+  const slides = useMemo<HeroSlide[]>(
+    () => [
+      ...(brand ?? []).map((slide) => ({ kind: 'brand' as const, slide })),
+      ...byPopularity
+        .filter((r) => r.home.banner && (r.home.bannerImage || r.coverImage))
+        .slice(0, 6)
+        .map((restaurant) => ({ kind: 'venue' as const, restaurant })),
+    ],
+    [brand, byPopularity]
+  )
+  const onPhoto = brand !== null && slides.length > 0
+  const [tone, setTone] = useState<'light' | 'dark'>('dark')
+  const heroTone = onPhoto ? (slides.some((s) => slideTone(s) === tone) ? tone : slideTone(slides[0])) : null
+  // White text only over dark photos; light artwork keeps dark text, whatever the site theme.
+  const dark = heroTone === 'dark'
+  const lightArt = heroTone === 'light'
 
   // The navbar floats over the photo instead of sitting above it.
   useEffect(() => {
-    setHeroOverlay(onPhoto)
-    return () => setHeroOverlay(false)
-  }, [onPhoto])
+    setHeroOverlay(heroTone)
+    return () => setHeroOverlay(null)
+  }, [heroTone])
 
   return (
     <div>
       {/* Hero */}
       <section className={onPhoto ? 'relative isolate overflow-hidden -mt-16 md:-mt-[72px] min-h-[100svh] flex flex-col justify-center' : 'relative overflow-hidden'}>
-        {onPhoto && <HeroSlideshow slides={slides} />}
+        {onPhoto && <HeroSlideshow slides={slides} onTone={setTone} />}
         <div className={onPhoto ? 'hidden' : 'absolute inset-0 -z-10'}>
           <div className="absolute -top-32 -right-32 w-[520px] h-[520px] rounded-full bg-green-light blur-3xl opacity-70" />
           <div className="absolute top-40 -left-40 w-[420px] h-[420px] rounded-full bg-terracotta-light blur-3xl opacity-50" />
@@ -69,7 +87,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
-              className={`inline-flex items-center gap-1.5 mb-5 px-3.5 py-1.5 rounded-full text-[12.5px] font-bold tracking-wide ${onPhoto ? 'bg-snow/15 text-snow backdrop-blur-md border border-snow/20' : 'bg-green-light text-green'}`}
+              className={`inline-flex items-center gap-1.5 mb-5 px-3.5 py-1.5 rounded-full text-[12.5px] font-bold tracking-wide transition-colors duration-700 ${dark ? 'bg-snow/15 text-snow backdrop-blur-md border border-snow/20' : lightArt ? 'bg-forest/10 text-forest border border-forest/15' : 'bg-green-light text-green'}`}
             >
               <Sparkles size={14} />
               {t('hero_badge')}
@@ -78,7 +96,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, ease: 'easeOut' }}
-              className={`text-[34px] leading-[1.15] sm:text-[44px] md:text-[56px] md:leading-[1.1] font-extrabold tracking-tight text-balance ${onPhoto ? 'text-snow [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]' : 'text-ink'}`}
+              className={`text-[34px] leading-[1.15] sm:text-[44px] md:text-[56px] md:leading-[1.1] font-extrabold tracking-tight text-balance transition-colors duration-700 ${dark ? 'text-snow [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]' : lightArt ? 'text-night' : 'text-ink'}`}
             >
               {t('hero_title')}
             </motion.h1>
@@ -86,7 +104,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.1, ease: 'easeOut' }}
-              className={`mt-5 text-[16px] md:text-[18px] leading-relaxed max-w-xl mx-auto ${onPhoto ? 'hidden sm:block [@media(max-height:720px)]:!hidden text-snow/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]' : 'text-ink-soft'}`}
+              className={`mt-5 text-[16px] md:text-[18px] leading-relaxed max-w-xl mx-auto transition-colors duration-700 ${onPhoto ? 'hidden sm:block [@media(max-height:720px)]:!hidden' : ''} ${dark ? 'text-snow/90 [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]' : lightArt ? 'text-night/75' : 'text-ink-soft'}`}
             >
               {t('hero_subtitle')}
             </motion.p>
@@ -129,15 +147,15 @@ export default function Home() {
             </motion.div>
 
             {stats.places > 0 && (
-              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className={`mx-auto max-w-md grid-cols-3 divide-x ${onPhoto ? 'mt-9 hidden sm:grid [@media(max-height:860px)]:!hidden divide-snow/25' : 'mt-12 grid divide-border'}`}>
+              <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className={`mx-auto max-w-md grid-cols-3 divide-x ${onPhoto ? `mt-9 hidden sm:grid [@media(max-height:860px)]:!hidden ${dark ? 'divide-snow/25' : 'divide-night/15'}` : 'mt-12 grid divide-border'}`}>
                 {[
                   { n: stats.places, label: t('stat_places') },
                   { n: stats.dishes, label: t('stat_dishes') },
                   { n: stats.areas, label: t('stat_areas') },
                 ].map((s) => (
                   <div key={s.label} className="px-3">
-                    <dt className={`text-[24px] md:text-[28px] font-extrabold tabular-nums leading-none ${onPhoto ? 'text-snow' : 'text-ink'}`}>{s.n}</dt>
-                    <dd className={`mt-1.5 text-[12.5px] font-medium ${onPhoto ? 'text-snow/75' : 'text-ink-faint'}`}>{s.label}</dd>
+                    <dt className={`text-[24px] md:text-[28px] font-extrabold tabular-nums leading-none ${dark ? 'text-snow' : lightArt ? 'text-night' : 'text-ink'}`}>{s.n}</dt>
+                    <dd className={`mt-1.5 text-[12.5px] font-medium ${dark ? 'text-snow/75' : lightArt ? 'text-night/60' : 'text-ink-faint'}`}>{s.label}</dd>
                   </div>
                 ))}
               </motion.dl>

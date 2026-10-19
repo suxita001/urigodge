@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import type { Restaurant } from '../data/types'
+import type { BrandSlide } from '../services/homeService'
 import { useLanguage } from '../i18n/LanguageContext'
 import { neighborhoodMap } from '../data/categories'
 import { venueName } from '../lib/format'
@@ -11,17 +12,30 @@ import { restaurantPath } from '../lib/site'
 const INTERVAL_MS = 5000
 const PHONE = '(max-width: 639px)'
 
-/** Wide photo for laptops and desktops (16:9). */
-const wide = (r: Restaurant) => sized(r.home.bannerImage || r.coverImage, 1920, 1080)
-/** Tall crop for phones (9:16) — the dedicated phone banner when one was uploaded. */
-const tall = (r: Restaurant) => sized(r.home.bannerImageMobile || r.home.bannerImage || r.coverImage, 900, 1600)
+/** urigod's own artwork comes first, then the restaurants an admin ticked for the banner. */
+export type HeroSlide = { kind: 'brand'; slide: BrandSlide } | { kind: 'venue'; restaurant: Restaurant }
+
+const slideKey = (s: HeroSlide) => (s.kind === 'brand' ? `brand-${s.slide.id}` : s.restaurant.slug)
+export const slideTone = (s: HeroSlide): 'light' | 'dark' => (s.kind === 'brand' ? s.slide.tone : 'dark')
+
+/** Wide artwork for laptops and desktops (16:9). */
+function wide(s: HeroSlide) {
+  if (s.kind === 'brand') return sized(s.slide.image, 1920, 1080)
+  return sized(s.restaurant.home.bannerImage || s.restaurant.coverImage, 1920, 1080)
+}
+/** Tall crop for phones (9:16) — the dedicated phone artwork when one was uploaded. */
+function tall(s: HeroSlide) {
+  if (s.kind === 'brand') return sized(s.slide.imageMobile || s.slide.image, 900, 1600)
+  const r = s.restaurant
+  return sized(r.home.bannerImageMobile || r.home.bannerImage || r.coverImage, 900, 1600)
+}
 
 /**
- * Photo backdrop for the home hero: the venues an admin picked cross-fade every five seconds with a
- * slow zoom. The caption in the bottom-left corner links to the venue on screen; arrows, dots and
- * swipes switch by hand. Everything sits behind/below the headline so the hero text stays the focus.
+ * Photo backdrop for the home hero. Slides cross-fade every five seconds with a slow zoom; arrows,
+ * dots and swipes switch by hand. Dark photos get a shade so white text stays readable; light
+ * artwork is left as designed and the page switches its text to dark (reported via `onTone`).
  */
-export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
+export default function HeroSlideshow({ slides, onTone }: { slides: HeroSlide[]; onTone: (tone: 'light' | 'dark') => void }) {
   const { t, lang } = useLanguage()
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -29,6 +43,10 @@ export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
   const [seen, setSeen] = useState<Set<number>>(() => new Set([0]))
   const count = slides.length
   const current = index % count
+  const slide = slides[current]
+  const light = slideTone(slide) === 'light'
+
+  useEffect(() => onTone(slideTone(slide)), [slide, onTone])
 
   const go = useCallback(
     (to: number) => {
@@ -81,15 +99,16 @@ export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
     }
   }, [current, count, go])
 
-  const slide = slides[current]
-  const area = neighborhoodMap[slide.neighborhood]?.label[lang]
+  const label = (s: HeroSlide) => (s.kind === 'venue' ? venueName(s.restaurant, lang) : s.slide.label?.[lang] || s.slide.label?.ka || 'urigod.ge')
 
   const dots = (
-    <div className="flex items-center gap-1.5" role="tablist">
-      {slides.map((r, i) => (
-        <button key={r.slug} type="button" role="tab" aria-selected={i === current} aria-label={venueName(r, lang)} onClick={() => go(i)} className="group h-6 flex items-center">
-          <span className={`block h-1.5 rounded-full overflow-hidden transition-all duration-300 ${i === current ? 'w-8 bg-snow/35' : 'w-1.5 bg-snow/50 group-hover:bg-snow/80'}`}>
-            {i === current && <span key={`${current}-${paused}`} className={`hero-progress block h-full bg-snow rounded-full ${paused ? 'is-paused' : ''}`} />}
+    <div className="flex items-center gap-1.5 h-8 px-2.5 rounded-full bg-night/40 backdrop-blur-md border border-snow/10" role="tablist">
+      {slides.map((s, i) => (
+        <button key={slideKey(s)} type="button" role="tab" aria-selected={i === current} aria-label={label(s)} onClick={() => go(i)} className="group h-6 flex items-center">
+          <span
+            className={`block h-1.5 rounded-full overflow-hidden transition-all duration-300 ${i === current ? 'w-8 bg-snow/35' : 'w-1.5 bg-snow/50 group-hover:bg-snow/80'}`}
+          >
+            {i === current && <span key={`${current}-${paused}`} className={`hero-progress block h-full rounded-full bg-snow ${paused ? 'is-paused' : ''}`} />}
           </span>
         </button>
       ))}
@@ -97,23 +116,76 @@ export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
   )
 
   const arrow = 'w-10 h-10 rounded-full bg-night/45 backdrop-blur-md border border-snow/15 text-snow hover:bg-night/70 flex items-center justify-center transition-colors'
+  const pill = 'hero-caption group self-start max-w-[calc(100%-72px)] sm:max-w-md min-w-0 flex items-center gap-3 py-1.5 rounded-full bg-night/50 backdrop-blur-md border border-snow/15 text-snow hover:bg-night/70 transition-colors'
+
+  let caption = null
+  if (slide.kind === 'venue') {
+    const r = slide.restaurant
+    const area = neighborhoodMap[r.neighborhood]?.label[lang]
+    caption = (
+      <Link key={slideKey(slide)} to={restaurantPath(r.slug)} className={`${pill} pl-1.5 pr-4`}>
+        <img src={sized(r.logo || r.coverImage || r.home.bannerImage, 96, 96)} alt="" className="keep-bright w-10 h-10 rounded-full object-cover shrink-0 border border-snow/25" />
+        <span className="min-w-0">
+          <span className="block text-[14.5px] font-bold leading-tight truncate">{venueName(r, lang)}</span>
+          {area && (
+            <span className="flex items-center gap-1 text-[12px] text-snow/70 leading-tight mt-0.5">
+              <MapPin size={11} />
+              {area}
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-1 pl-1 sm:pl-2 text-[12.5px] font-bold text-snow/85 group-hover:text-snow whitespace-nowrap">
+          <span className="hidden sm:inline">{t('card_view')}</span>
+          <ArrowUpRight size={15} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </span>
+      </Link>
+    )
+  } else if (slide.slide.label && (slide.slide.label.ka || slide.slide.label.en)) {
+    const text = label(slide)
+    const href = slide.slide.link?.trim()
+    const inner = (
+      <>
+        <span className="block min-w-0 truncate text-[14.5px] font-bold leading-tight">{text}</span>
+        {href && <ArrowUpRight size={15} className="shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
+      </>
+    )
+    caption = !href ? (
+      <span key={slideKey(slide)} className={`${pill} px-4 py-2.5`}>
+        {inner}
+      </span>
+    ) : /^https?:\/\//.test(href) ? (
+      <a key={slideKey(slide)} href={href} target="_blank" rel="noreferrer" className={`${pill} px-4 py-2.5`}>
+        {inner}
+      </a>
+    ) : (
+      <Link key={slideKey(slide)} to={href.startsWith('/') ? href : `/${href}`} className={`${pill} px-4 py-2.5`}>
+        {inner}
+      </Link>
+    )
+  }
 
   return (
     <>
       <div ref={backdrop} className="absolute inset-0 -z-10 bg-night" aria-hidden="true">
-        {slides.map((r, i) =>
+        {slides.map((s, i) =>
           seen.has(i) ? (
-            <picture key={r.slug}>
-              <source media={PHONE} srcSet={tall(r)} />
-              <img src={wide(r)} alt="" fetchPriority={i === 0 ? 'high' : undefined} className={`hero-slide keep-bright absolute inset-0 w-full h-full object-cover ${i === current ? 'is-active' : ''}`} />
+            <picture key={slideKey(s)}>
+              <source media={PHONE} srcSet={tall(s)} />
+              <img src={wide(s)} alt="" fetchPriority={i === 0 ? 'high' : undefined} className={`hero-slide keep-bright absolute inset-0 w-full h-full object-cover ${i === current ? 'is-active' : ''}`} />
             </picture>
           ) : null
         )}
-        {/* An even tint keeps any photo calm; extra shade under the navbar, behind the headline and along the caption row. */}
-        <div className="absolute inset-0 bg-night/55" />
-        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-night/70 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_48%,rgba(28,26,22,0.5),transparent_78%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-night/85 to-transparent" />
+        {/* Photos: an even tint plus extra shade under the navbar, behind the headline and along the caption row. */}
+        <div className={`absolute inset-0 transition-opacity duration-700 ${light ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="absolute inset-0 bg-night/55" />
+          <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-night/70 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_48%,rgba(28,26,22,0.5),transparent_78%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-night/85 to-transparent" />
+        </div>
+        {/* Light artwork: only a soft glow behind the headline so dark text always reads. */}
+        <div
+          className={`absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_45%,rgba(250,247,241,0.7),transparent_75%)] transition-opacity duration-700 ${light ? 'opacity-100' : 'opacity-0'}`}
+        />
       </div>
 
       <div
@@ -124,28 +196,9 @@ export default function HeroSlideshow({ slides }: { slides: Restaurant[] }) {
         onBlur={() => setPaused(false)}
       >
         {/* Phones: dots sit above the caption (the corner is taken by the assistant button) and swiping replaces the arrows. */}
-        {count > 1 && <div className="sm:hidden pl-1">{dots}</div>}
+        {count > 1 && <div className="sm:hidden self-start">{dots}</div>}
 
-        <Link
-          key={slide.slug}
-          to={restaurantPath(slide.slug)}
-          className="hero-caption group self-start max-w-[calc(100%-72px)] sm:max-w-md min-w-0 flex items-center gap-3 pl-1.5 pr-4 py-1.5 rounded-full bg-night/50 backdrop-blur-md border border-snow/15 text-snow hover:bg-night/70 transition-colors"
-        >
-          <img src={sized(slide.logo || slide.coverImage || slide.home.bannerImage, 96, 96)} alt="" className="keep-bright w-10 h-10 rounded-full object-cover shrink-0 border border-snow/25" />
-          <span className="min-w-0">
-            <span className="block text-[14.5px] font-bold leading-tight truncate">{venueName(slide, lang)}</span>
-            {area && (
-              <span className="flex items-center gap-1 text-[12px] text-snow/70 leading-tight mt-0.5">
-                <MapPin size={11} />
-                {area}
-              </span>
-            )}
-          </span>
-          <span className="flex items-center gap-1 pl-1 sm:pl-2 text-[12.5px] font-bold text-snow/85 group-hover:text-snow whitespace-nowrap">
-            <span className="hidden sm:inline">{t('card_view')}</span>
-            <ArrowUpRight size={15} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </span>
-        </Link>
+        {caption ?? <span />}
 
         {count > 1 && (
           <div className="hidden sm:flex items-center gap-2 shrink-0">

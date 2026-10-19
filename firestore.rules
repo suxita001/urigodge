@@ -235,6 +235,14 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // The home-page banner artwork is managed by every admin.
+    match /settings/home {
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['slides', 'updatedAt'])
+        && request.resource.data.slides is list
+        && request.resource.data.slides.size() <= 12;
+    }
+
     // ======================= Everything else is closed =======================
     match /{document=**} {
       allow read, write: if false;
