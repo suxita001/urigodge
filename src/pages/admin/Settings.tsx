@@ -4,6 +4,7 @@ import { useSeo } from '../../hooks/useSeo'
 import { SUPER_ADMIN_EMAIL } from '../../utils/roles'
 import { usingEmulators } from '../../lib/firebase'
 import { Card, PageHeader, StatusBadge } from '../../components/admin/AdminUI'
+import MaintenanceCard from '../../components/admin/MaintenanceCard'
 
 export default function Settings() {
   useSeo('პარამეტრები | მართვის პანელი')
@@ -13,6 +14,7 @@ export default function Settings() {
       <PageHeader title="პარამეტრები" description={isSuperAdmin ? 'სისტემის პარამეტრები.' : 'სისტემის პარამეტრებს ცვლის მხოლოდ Super Admin.'} />
 
       <div className="grid lg:grid-cols-2 gap-4 md:gap-5">
+        <MaintenanceCard />
         <Card className="p-5 md:p-6 lg:col-span-2">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-10 h-10 rounded-xl bg-ink text-cream flex items-center justify-center">

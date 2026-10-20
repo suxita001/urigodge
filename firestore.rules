@@ -78,6 +78,12 @@ service cloud.firestore {
       return data.role == 'super_admin' || data.get('email', '').lower() == superAdminEmail();
     }
 
+    // Maintenance mode (settings/site.maintenance) — the public cannot read restaurants while it is on.
+    function siteOpen() {
+      return !exists(/databases/$(database)/documents/settings/site)
+        || get(/databases/$(database)/documents/settings/site).data.get('maintenance', false) != true;
+    }
+
     function invitationPath() {
       return /databases/$(database)/documents/invitations/$(authEmail());
     }
@@ -174,9 +180,9 @@ service cloud.firestore {
 
     // ======================= Restaurants =======================
     match /restaurants/{rid} {
-      allow get: if resource.data.get('status', 'published') == 'published' || isAdmin() || managesRestaurant(rid);
+      allow get: if (resource.data.get('status', 'published') == 'published' && siteOpen()) || isAdmin() || managesRestaurant(rid);
       // Public list queries must filter on status == 'published'.
-      allow list: if resource.data.status == 'published' || isAdmin();
+      allow list: if (resource.data.status == 'published' && siteOpen()) || isAdmin();
 
       allow create: if isAdmin()
         && request.resource.data.slug == rid

@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from 'react'
 import ThemeToggle from '../ThemeToggle'
+import { useSiteStatus } from '../../services/siteStatusService'
 import Spinner from '../ui/Spinner'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -127,6 +128,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export default function AdminLayout() {
+  const site = useSiteStatus()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location = useLocation()
 
@@ -190,6 +192,14 @@ export default function AdminLayout() {
           <ThemeToggle />
           <UserMenu />
         </header>
+        {site.maintenance && (
+          <div className="mx-4 md:mx-8 mt-4 rounded-2xl bg-terracotta-light text-terracotta px-4 py-3 text-[13.5px] font-bold flex flex-wrap items-center gap-2">
+            საიტი ახლა სტუმრებისთვის დამალულია.
+            <Link to="/admin/settings" className="underline underline-offset-2">
+              პარამეტრები
+            </Link>
+          </div>
+        )}
         <main className="px-4 md:px-8 py-6 md:py-8 max-w-[1280px]">
           <Suspense
             fallback={

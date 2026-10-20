@@ -1,8 +1,11 @@
 import { useEffect, Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
+import { BrowserRouter, Link, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { LanguageProvider } from './i18n/LanguageContext'
 import { ThemeProvider } from './context/ThemeContext'
 import PageViewTracker from './components/PageViewTracker'
+import Maintenance from './pages/Maintenance'
+import { useSiteStatus } from './services/siteStatusService'
+import { useAuth } from './hooks/useAuth'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import { RestaurantsProvider } from './context/RestaurantsContext'
@@ -87,11 +90,33 @@ function PageFallback() {
   )
 }
 
+// Pages a visitor can still open while the site is hidden, so staff can sign in and invitations work.
+const OPEN_DURING_MAINTENANCE = ['/login', '/forgot-password', '/invite']
+
+function MaintenanceStrip() {
+  return (
+    <div className="relative z-50 bg-terracotta text-snow text-center text-[13px] font-bold px-4 py-2">
+      საიტი სტუმრებისთვის დამალულია — შენ ხედავ, რადგან შესული ხარ.{' '}
+      <Link to="/admin/settings" className="underline underline-offset-2">
+        გახსნა
+      </Link>
+    </div>
+  )
+}
+
 function PublicLayout() {
   const { pathname } = useLocation()
+  const site = useSiteStatus()
+  const { loading: authLoading, isStaff } = useAuth()
   usePrefetchPages()
+  if (site.maintenance && !OPEN_DURING_MAINTENANCE.includes(pathname)) {
+    // wait for the sign-in check so staff never see the closed page flash by
+    if (authLoading) return <PageFallback />
+    if (!isStaff) return <Maintenance message={site.message} />
+  }
   return (
     <div className="min-h-screen flex flex-col bg-cream">
+      {site.maintenance && isStaff && <MaintenanceStrip />}
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<PageFallback />}>
