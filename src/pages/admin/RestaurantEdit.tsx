@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, ExternalLink, Info, MapPin, Clock3, Images, UtensilsCrossed, GitBranch, UserCog, Save, Undo2, ShieldAlert, UserMinus, Plus, Store, Star } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Info, MapPin, Clock3, Images, UtensilsCrossed, GitBranch, UserCog, Save, Undo2, ShieldAlert, UserMinus, Plus, Store, Star, CalendarCheck2, LayoutGrid } from 'lucide-react'
 import type { Branch, Restaurant, UserProfile } from '../../data/types'
 import { useAuth } from '../../hooks/useAuth'
 import { useInvitations, useManagedRestaurant, useManagedRestaurants, useUsers } from '../../hooks/useAdmin'
@@ -29,6 +29,8 @@ import {
   type DraftErrors,
 } from '../../components/admin/RestaurantFormSections'
 import MenuBuilder from '../../components/admin/MenuBuilder'
+import ReservationsPanel from '../../components/booking/ReservationsPanel'
+import FloorEditor from '../../components/booking/FloorEditor'
 import BranchManager from '../../components/admin/BranchManager'
 import AssignManagerModal from '../../components/admin/AssignManagerModal'
 import { Card, EmptyState, StatusBadge } from '../../components/admin/AdminUI'
@@ -36,7 +38,7 @@ import Button from '../../components/ui/Button'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import Avatar from '../../components/ui/Avatar'
 
-type Tab = 'info' | 'location' | 'hours' | 'photos' | 'menu' | 'branches' | 'home' | 'managers'
+type Tab = 'info' | 'location' | 'hours' | 'photos' | 'menu' | 'branches' | 'bookings' | 'floor' | 'home' | 'managers'
 
 const FIELD_LABELS: Partial<Record<keyof Draft, string>> = {
   name: 'სახელი',
@@ -97,6 +99,8 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     { id: 'photos', label: 'ფოტოები', icon: Images },
     { id: 'menu', label: 'მენიუ', icon: UtensilsCrossed },
     { id: 'branches', label: 'ფილიალები', icon: GitBranch },
+    ...(isAdmin || restaurant.booking.enabled ? [{ id: 'bookings' as Tab, label: 'ჯავშნები', icon: CalendarCheck2 }] : []),
+    ...(restaurant.booking.enabled && (isAdmin || restaurant.booking.floorPlan) ? [{ id: 'floor' as Tab, label: 'დარბაზის რუკა', icon: LayoutGrid }] : []),
     ...(isAdmin ? [{ id: 'home' as Tab, label: 'მთავარი გვერდი', icon: Star }, { id: 'managers' as Tab, label: 'მენეჯერები', icon: UserCog }] : []),
   ]
 
@@ -125,7 +129,7 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     }
     const clean = cleanDraft(draft)
     const keys = (Object.keys(clean) as (keyof Draft)[]).filter((k) => k !== 'slug' && JSON.stringify(clean[k]) !== JSON.stringify(saved[k]))
-    if (!isAdmin) keys.splice(0, keys.length, ...keys.filter((k) => k !== 'status' && k !== 'popularity' && k !== 'home'))
+    if (!isAdmin) keys.splice(0, keys.length, ...keys.filter((k) => k !== 'status' && k !== 'popularity' && k !== 'home' && k !== 'booking'))
     if (keys.length === 0) {
       setDraft(null)
       return
@@ -259,6 +263,18 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
               <>
                 <SectionTitle title="ფილიალები" description="ცვლილებები ინახება მაშინვე." />
                 <BranchManager restaurant={restaurant} value={restaurant.branches} onChange={onBranchesChange} />
+              </>
+            )}
+            {tab === 'bookings' && (
+              <>
+                <SectionTitle title="ჯავშნები" description="ახალი ჯავშნები აქ თავისით ჩნდება. ცვლილებები ინახება მაშინვე." />
+                <ReservationsPanel restaurant={restaurant} />
+              </>
+            )}
+            {tab === 'floor' && (
+              <>
+                <SectionTitle title="დარბაზის რუკა" description="დახატე სართულები: მაგიდები ადგილებით, შესასვლელი, ტუალეტი, სცენა, ბარი. სტუმრები მაგიდას ამ რუკაზე ირჩევენ." />
+                <FloorEditor restaurantId={restaurant.id} />
               </>
             )}
             {tab === 'home' && isAdmin && (

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore'
 import { auth, db } from '../lib/firebase'
 import { logActivity, type LogInput } from './activityLogService'
+import { DEFAULT_BOOKING_ACCESS } from '../data/booking'
 import type {
   CuisineId,
   DayHours,
@@ -69,6 +70,8 @@ export function fromRestaurantDoc(id: string, data: Partial<RestaurantDoc>): Res
     qrEnabled: !!data.qrEnabled,
     popularity: data.popularity ?? 0,
     home: data.home ?? {},
+    booking: { ...DEFAULT_BOOKING_ACCESS, ...(data.booking ?? {}) },
+    bookingPrefs: data.bookingPrefs,
     status: data.status === 'draft' ? 'draft' : 'published',
     updatedAt: (data.updatedAt as Timestamp | undefined)?.toDate?.() ?? null,
   }
@@ -101,6 +104,8 @@ export function toRestaurantDoc(r: Restaurant): RestaurantInput {
     qrEnabled: r.qrEnabled,
     popularity: r.popularity,
     home: r.home,
+    booking: r.booking,
+    bookingPrefs: r.bookingPrefs,
     status: r.status,
   }
 }

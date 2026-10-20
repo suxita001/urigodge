@@ -1,3 +1,4 @@
+import type { BookingAccess, BookingPrefs } from './booking'
 export type Lang = 'ka' | 'en'
 
 export type LocalizedText = {
@@ -178,6 +179,10 @@ export interface Restaurant {
   qrEnabled: boolean
   popularity: number
   home: HomePlacement
+  /** Set by admins: reservations on/off and whether guests pick a table on the floor plan. */
+  booking: BookingAccess
+  /** Set by the restaurant's manager. Missing values fall back to DEFAULT_BOOKING_PREFS. */
+  bookingPrefs?: Partial<BookingPrefs>
   logo?: string
   status: RestaurantStatus
   updatedAt?: Date | null
@@ -290,6 +295,8 @@ export interface RestaurantDoc {
   qrEnabled: boolean
   popularity?: number
   home?: HomePlacement
+  booking?: BookingAccess
+  bookingPrefs?: Partial<BookingPrefs>
   status?: RestaurantStatus
   createdAt?: unknown
   updatedAt?: unknown

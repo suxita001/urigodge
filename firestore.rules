@@ -194,7 +194,69 @@ service cloud.firestore {
 
       // Managers edit content of their own restaurants but not identity/visibility fields.
       allow update: if managesRestaurant(rid)
-        && !changedKeys().hasAny(['slug', 'status', 'createdAt', 'createdBy', 'popularity', 'home']);
+        && !changedKeys().hasAny(['slug', 'status', 'createdAt', 'createdBy', 'popularity', 'home', 'booking']);
+
+      allow delete: if isAdmin();
+
+      // Floor plans for table booking: public to read, drawn by the restaurant's managers and admins.
+      match /floors/{floorId} {
+        allow read: if true;
+        allow write: if isAdmin() || managesRestaurant(rid);
+      }
+
+      // One lock per reserved table × time slot. The ID is unique, so a second booking of the same
+      // table and time cannot be created. Locks hold no personal data, so anyone may read them.
+      match /locks/{lockId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['reservationId', 'tableId', 'floorId', 'date', 'slot'])
+          && lockId == request.resource.data.date + '_' + request.resource.data.tableId + '_' + request.resource.data.slot
+          && existsAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId))
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.createdBy == request.auth.uid
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.restaurantId == rid
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.tableId == request.resource.data.tableId
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.date == request.resource.data.date;
+        allow delete: if isAdmin() || managesRestaurant(rid)
+          || (signedIn() && get(/databases/$(database)/documents/reservations/$(resource.data.reservationId)).data.createdBy == request.auth.uid);
+        allow update: if false;
+      }
+    }
+
+    // ======================= Reservations =======================
+    function bookingOpen(rid) {
+      let r = get(/databases/$(database)/documents/restaurants/$(rid)).data;
+      return r.get('status', 'published') == 'published' && r.get('booking', {}).get('enabled', false) == true;
+    }
+    function autoConfirm(rid) {
+      return get(/databases/$(database)/documents/restaurants/$(rid)).data.get('bookingPrefs', {}).get('autoConfirm', false) == true;
+    }
+    match /reservations/{resId} {
+      allow read: if signedIn() && (resource.data.createdBy == request.auth.uid || managesRestaurant(resource.data.restaurantId) || isAdmin());
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['restaurantId', 'restaurantName', 'mode', 'floorId', 'floorName', 'tableId', 'tableLabel', 'date', 'start', 'end', 'partySize', 'name', 'phone', 'note', 'status', 'createdBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.mode in ['table', 'form']
+        && request.resource.data.partySize is int && request.resource.data.partySize >= 1 && request.resource.data.partySize <= 30
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.start is string && request.resource.data.start.matches('^[0-9]{2}:[0-9]{2}$')
+        && request.resource.data.name is string && request.resource.data.name.size() <= 80
+        && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+        && request.resource.data.note is string && request.resource.data.note.size() <= 300
+        && bookingOpen(request.resource.data.restaurantId)
+        && (request.resource.data.status == 'pending' || (request.resource.data.status == 'confirmed' && autoConfirm(request.resource.data.restaurantId)));
+
+      // the guest may only cancel their own booking
+      allow update: if signedIn() && resource.data.createdBy == request.auth.uid
+        && changedKeys().hasOnly(['status', 'updatedAt'])
+        && resource.data.status in ['pending', 'confirmed']
+        && request.resource.data.status == 'cancelled';
+
+      // the restaurant's managers and admins confirm, decline or cancel
+      allow update: if (managesRestaurant(resource.data.restaurantId) || isAdmin())
+        && changedKeys().hasOnly(['status', 'updatedAt', 'managerNote'])
+        && request.resource.data.status in ['pending', 'confirmed', 'declined', 'cancelled'];
 
       allow delete: if isAdmin();
     }

@@ -18,6 +18,7 @@ import { formatDate } from '../lib/format'
 import { useToast } from '../hooks/useToast'
 import { resendVerificationEmail } from '../services/authService'
 import type { Restaurant } from '../data/types'
+import MyReservations from '../components/booking/MyReservations'
 
 // Verification proves email ownership; invitations and the super admin role only apply once verified.
 function VerifyEmailBanner() {
@@ -210,6 +211,8 @@ export default function Profile() {
       </motion.section>
 
       {/* Favorites */}
+      <MyReservations />
+
       <section id="favorites" className="mt-12 scroll-mt-24">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">

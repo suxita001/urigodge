@@ -9,6 +9,7 @@ import {
   Navigation2,
   UtensilsCrossed,
   ArrowRight,
+  CalendarCheck2,
 } from 'lucide-react'
 import { InstagramIcon, FacebookIcon } from '../components/SocialIcons'
 import { useRestaurant } from '../hooks/useRestaurants'
@@ -195,6 +196,15 @@ export default function RestaurantDetail() {
               <Phone size={16} />
               {t('restaurant_call')}
             </a>
+            {restaurant.booking.enabled && (
+              <Link
+                to={`${restaurantPath(restaurant.slug)}/book`}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink text-cream font-bold text-[14px] hover:opacity-90 transition-opacity"
+              >
+                <CalendarCheck2 size={16} />
+                {t('book_cta')}
+              </Link>
+            )}
             <Link
               to={menuPath(restaurant.slug)}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-green text-green font-bold text-[14px] hover:bg-green-light transition-colors"

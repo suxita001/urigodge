@@ -26,6 +26,8 @@ const RestaurantDetail = lazy(() => import('./pages/RestaurantDetail'))
 const MenuPage = lazy(() => import('./pages/MenuPage'))
 const Terms = lazy(() => import('./pages/Terms'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const BookingPage = lazy(() => import('./pages/BookingPage'))
+const ReservationsAdmin = lazy(() => import('./pages/admin/Reservations'))
 const Landing = lazy(() => import('./pages/Landing'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
@@ -158,6 +160,7 @@ export default function App() {
                       <Route path="/areas/:id" element={<Landing kind="area" />} />
                       <Route path="/restaurants/:slug" element={<RestaurantDetail />} />
                       <Route path="/restaurants/:slug/menu" element={<MenuPage />} />
+                      <Route path="/restaurants/:slug/book" element={<BookingPage />} />
                       <Route path="/restaurant/:slug" element={<LegacyRestaurantRedirect />} />
                       <Route path="/r/:slug" element={<MenuRedirect />} />
                       <Route path="/menu/:slug" element={<MenuRedirect />} />
@@ -196,6 +199,7 @@ export default function App() {
                       <Route path="logs" element={<Logs />} />
                       <Route path="settings" element={adminOnly(<Settings />)} />
                       <Route path="banner" element={adminOnly(<HomeBanner />)} />
+                      <Route path="reservations" element={adminOnly(<ReservationsAdmin />)} />
                       <Route path="*" element={<Navigate to="/admin" replace />} />
                     </Route>
                     <Route path="/dashboard/*" element={<Navigate to="/admin" replace />} />
