@@ -30,6 +30,7 @@ import {
 } from '../../components/admin/RestaurantFormSections'
 import MenuBuilder from '../../components/admin/MenuBuilder'
 import ReservationsPanel from '../../components/booking/ReservationsPanel'
+import { BOOKING_ENABLED } from '../../lib/site'
 import FloorEditor from '../../components/booking/FloorEditor'
 import BranchManager from '../../components/admin/BranchManager'
 import AssignManagerModal from '../../components/admin/AssignManagerModal'
@@ -99,8 +100,8 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
     { id: 'photos', label: 'ფოტოები', icon: Images },
     { id: 'menu', label: 'მენიუ', icon: UtensilsCrossed },
     { id: 'branches', label: 'ფილიალები', icon: GitBranch },
-    ...(isAdmin || restaurant.booking.enabled ? [{ id: 'bookings' as Tab, label: 'ჯავშნები', icon: CalendarCheck2 }] : []),
-    ...(restaurant.booking.enabled && (isAdmin || restaurant.booking.floorPlan) ? [{ id: 'floor' as Tab, label: 'დარბაზის რუკა', icon: LayoutGrid }] : []),
+    ...(BOOKING_ENABLED && (isAdmin || restaurant.booking.enabled) ? [{ id: 'bookings' as Tab, label: 'ჯავშნები', icon: CalendarCheck2 }] : []),
+    ...(BOOKING_ENABLED && restaurant.booking.enabled && (isAdmin || restaurant.booking.floorPlan) ? [{ id: 'floor' as Tab, label: 'დარბაზის რუკა', icon: LayoutGrid }] : []),
     ...(isAdmin ? [{ id: 'home' as Tab, label: 'მთავარი გვერდი', icon: Star }, { id: 'managers' as Tab, label: 'მენეჯერები', icon: UserCog }] : []),
   ]
 
@@ -265,13 +266,13 @@ function Editor({ restaurant }: { restaurant: Restaurant }) {
                 <BranchManager restaurant={restaurant} value={restaurant.branches} onChange={onBranchesChange} />
               </>
             )}
-            {tab === 'bookings' && (
+            {BOOKING_ENABLED && tab === 'bookings' && (
               <>
                 <SectionTitle title="ჯავშნები" description="ახალი ჯავშნები აქ თავისით ჩნდება. ცვლილებები ინახება მაშინვე." />
                 <ReservationsPanel restaurant={restaurant} />
               </>
             )}
-            {tab === 'floor' && (
+            {BOOKING_ENABLED && tab === 'floor' && (
               <>
                 <SectionTitle title="დარბაზის რუკა" description="დახატე სართულები: მაგიდები ადგილებით, შესასვლელი, ტუალეტი, სცენა, ბარი. სტუმრები მაგიდას ამ რუკაზე ირჩევენ." />
                 <FloorEditor restaurantId={restaurant.id} />

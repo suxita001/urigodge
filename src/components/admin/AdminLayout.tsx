@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from 'react'
 import ThemeToggle from '../ThemeToggle'
+import { BOOKING_ENABLED } from '../../lib/site'
 import { useSiteStatus } from '../../services/siteStatusService'
 import Spinner from '../ui/Spinner'
 import { Link, Outlet, useLocation } from 'react-router-dom'
@@ -41,7 +42,7 @@ function useNavItems(): NavItem[] {
       { to: '/admin', label: 'მთავარი დაფა', icon: LayoutDashboard, match: (p) => p === '/admin' },
       { to: '/admin/restaurants', label: 'რესტორნები', icon: Store },
       { to: '/admin/banner', label: 'მთავარი ბანერი', icon: GalleryHorizontal },
-      { to: '/admin/reservations', label: 'ჯავშნები', icon: CalendarCheck2 },
+      ...(BOOKING_ENABLED ? [{ to: '/admin/reservations', label: 'ჯავშნები', icon: CalendarCheck2 }] : []),
       { to: '/admin/users', label: 'მომხმარებლები', icon: Users },
       { to: '/admin/managers', label: 'რესტორნის მენეჯერები', icon: UserCog },
       { to: '/admin/admins', label: 'ადმინები', icon: ShieldCheck },
@@ -57,7 +58,7 @@ function useNavItems(): NavItem[] {
     { to: `${base}?tab=info`, label: 'ჩემი რესტორანი', icon: Store, match: tab('info') },
     { to: `${base}?tab=branches`, label: 'ფილიალები', icon: GitBranch, match: tab('branches') },
     { to: `${base}?tab=menu`, label: 'მენიუ', icon: UtensilsCrossed, match: tab('menu') },
-    { to: `${base}?tab=bookings`, label: 'ჯავშნები', icon: CalendarCheck2, match: tab('bookings') },
+    ...(BOOKING_ENABLED ? [{ to: `${base}?tab=bookings`, label: 'ჯავშნები', icon: CalendarCheck2, match: tab('bookings') }] : []),
     { to: '/admin/logs', label: 'აქტივობა', icon: History },
     { to: '/profile', label: 'პროფილი', icon: User },
   ]

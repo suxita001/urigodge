@@ -9,3 +9,9 @@ export const absoluteUrl = (path: string) => `${SITE_URL}${path === '/' ? '' : p
 
 /** "Featured places" on the home page is two rows of three. */
 export const MAX_FEATURED = 6
+
+/**
+ * Table booking is built but switched off for now: with this false nobody — guests, managers or
+ * admins — sees any booking button, page, tab or menu item. Flip to true to bring it all back.
+ */
+export const BOOKING_ENABLED = false

@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Routes, Route, Navigate, Outlet, useLocation, useP
 import { LanguageProvider } from './i18n/LanguageContext'
 import { ThemeProvider } from './context/ThemeContext'
 import PageViewTracker from './components/PageViewTracker'
+import { BOOKING_ENABLED } from './lib/site'
 import Maintenance from './pages/Maintenance'
 import { useSiteStatus } from './services/siteStatusService'
 import { useAuth } from './hooks/useAuth'
@@ -160,7 +161,7 @@ export default function App() {
                       <Route path="/areas/:id" element={<Landing kind="area" />} />
                       <Route path="/restaurants/:slug" element={<RestaurantDetail />} />
                       <Route path="/restaurants/:slug/menu" element={<MenuPage />} />
-                      <Route path="/restaurants/:slug/book" element={<BookingPage />} />
+                      {BOOKING_ENABLED && <Route path="/restaurants/:slug/book" element={<BookingPage />} />}
                       <Route path="/restaurant/:slug" element={<LegacyRestaurantRedirect />} />
                       <Route path="/r/:slug" element={<MenuRedirect />} />
                       <Route path="/menu/:slug" element={<MenuRedirect />} />
@@ -199,7 +200,7 @@ export default function App() {
                       <Route path="logs" element={<Logs />} />
                       <Route path="settings" element={adminOnly(<Settings />)} />
                       <Route path="banner" element={adminOnly(<HomeBanner />)} />
-                      <Route path="reservations" element={adminOnly(<ReservationsAdmin />)} />
+                      {BOOKING_ENABLED && <Route path="reservations" element={adminOnly(<ReservationsAdmin />)} />}
                       <Route path="*" element={<Navigate to="/admin" replace />} />
                     </Route>
                     <Route path="/dashboard/*" element={<Navigate to="/admin" replace />} />

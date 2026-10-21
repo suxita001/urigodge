@@ -64,6 +64,20 @@ html {
   text-size-adjust: 100%;
 }
 
+/* A text cursor belongs only where you can type. Without this, Chrome and Edge show a blinking
+   caret on plain text when caret browsing (F7) is on. */
+*,
+*::before,
+*::after {
+  caret-color: transparent;
+}
+input,
+textarea,
+select,
+[contenteditable]:not([contenteditable='false']) {
+  caret-color: var(--color-green);
+}
+
 /* Nothing may push the page wider than the screen, so it can never be dragged sideways. */
 html,
 body {

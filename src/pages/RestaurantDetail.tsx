@@ -28,7 +28,7 @@ import { sized } from '../lib/image'
 import { landingPath } from '../../shared/taxonomy'
 import MapView from '../components/MapView'
 import { breadcrumbJsonLd, restaurantJsonLd, seoName } from '../lib/seo'
-import { menuPath, restaurantPath } from '../lib/site'
+import { menuPath, restaurantPath, BOOKING_ENABLED } from '../lib/site'
 import type { Coordinates } from '../data/types'
 
 const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
@@ -196,7 +196,7 @@ export default function RestaurantDetail() {
               <Phone size={16} />
               {t('restaurant_call')}
             </a>
-            {restaurant.booking.enabled && (
+            {BOOKING_ENABLED && restaurant.booking.enabled && (
               <Link
                 to={`${restaurantPath(restaurant.slug)}/book`}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink text-cream font-bold text-[14px] hover:opacity-90 transition-opacity"
