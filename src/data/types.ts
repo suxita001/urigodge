@@ -95,6 +95,8 @@ export interface Branch {
   address: LocalizedText
   phone: string
   coordinates: Coordinates
+  /** Google Maps place link — opens the real place card; coordinates are the fallback. */
+  mapsUrl?: string
   openingHours: OpeningHours
   isMain?: boolean
 }
@@ -172,6 +174,7 @@ export interface Restaurant {
   website?: string
   socialLinks?: SocialLinks
   coordinates: Coordinates
+  mapsUrl?: string
   openingHours: OpeningHours
   branches: Branch[]
   menu: MenuCategoryData[]
@@ -288,6 +291,7 @@ export interface RestaurantDoc {
   website?: string
   socialLinks?: SocialLinks
   coordinates: Coordinates
+  mapsUrl?: string
   openingHours: Partial<OpeningHours>
   branches: Branch[]
   menu: MenuCategoryData[]

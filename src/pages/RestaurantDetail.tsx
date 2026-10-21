@@ -21,6 +21,7 @@ import { isOpenNow } from '../data/helpers'
 import { useSeo } from '../hooks/useSeo'
 import RestaurantGallery from '../components/RestaurantGallery'
 import BranchCard from '../components/BranchCard'
+import { directionsLink } from '../lib/maps'
 import CopyLinkButton from '../components/CopyLinkButton'
 import RestaurantCard from '../components/RestaurantCard'
 import { useRestaurants } from '../hooks/useRestaurants'
@@ -181,7 +182,7 @@ export default function RestaurantDetail() {
           {/* Action buttons */}
           <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${restaurant.coordinates.lat},${restaurant.coordinates.lng}`}
+              href={(() => { const b = restaurant.branches.find((x) => x.id === activeBranchId); return b ? directionsLink(b.mapsUrl, b.coordinates) : directionsLink(restaurant.mapsUrl, restaurant.coordinates) })()}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-green text-cream font-bold text-[14px] hover:bg-green-dark transition-colors"

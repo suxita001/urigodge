@@ -98,3 +98,52 @@ export async function deleteImageByUrl(_url: string): Promise<void> {
 export async function deleteStorageFile(_path: string): Promise<void> {
   return
 }
+
+export class ImageLinkError extends Error {}
+
+/**
+ * Turns common share links into direct image links Cloudinary can download:
+ * Google Drive (file must be shared as "anyone with the link"), Dropbox, and plain image URLs.
+ * Page links that only show an image (Facebook/Instagram posts) are rejected with a hint.
+ */
+export function directImageUrl(raw: string): string {
+  const s = raw.trim()
+  let u: URL
+  try {
+    u = new URL(s)
+  } catch {
+    throw new ImageLinkError('ეს ბმული არ არის.')
+  }
+  const host = u.hostname.replace(/^www\./, '')
+  if (host === 'drive.google.com' || host === 'docs.google.com') {
+    const id = u.pathname.match(/\/d\/([\w-]{10,})/)?.[1] ?? u.searchParams.get('id')
+    if (!id) throw new ImageLinkError('Google Drive-ის ბმულში ფაილი ვერ ვიპოვე — გამოიყენე ფაილის „ბმულის გაზიარება“.')
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w2560`
+  }
+  if (host.endsWith('dropbox.com')) {
+    u.searchParams.delete('dl')
+    u.searchParams.set('raw', '1')
+    return u.toString()
+  }
+  if (/(^|\.)(facebook\.com|fb\.com|instagram\.com)$/.test(host)) {
+    throw new ImageLinkError('ეს პოსტის ბმულია და არა ფოტოსი. გახსენი ფოტო, დააჭირე მარჯვენა ღილაკს → „სურათის მისამართის კოპირება“ და ის ჩასვი.')
+  }
+  return u.toString()
+}
+
+/** Cloudinary downloads the picture itself, so links work even when the other site blocks browsers from copying it. */
+export async function uploadRestaurantImageFromUrl(restaurantId: string, kind: ImageKind, link: string): Promise<UploadResult> {
+  const src = directImageUrl(link)
+  const path = restaurantImagePath(restaurantId, kind, 'link')
+  const form = new FormData()
+  form.append('file', src)
+  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
+  form.append('folder', path.slice(0, path.lastIndexOf('/')))
+  form.append('public_id', path.slice(path.lastIndexOf('/') + 1))
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form })
+  const data = (await res.json().catch(() => null)) as { secure_url?: string; error?: { message?: string } } | null
+  if (!res.ok || !data?.secure_url) {
+    throw new ImageLinkError('ფოტო ამ ბმულიდან ვერ ჩამოვტვირთე. დარწმუნდი, რომ ბმული საჯაროა (Drive-ზე — „ნებისმიერს, ვისაც ბმული აქვს“) და პირდაპირ ფოტოზე მიუთითებს.')
+  }
+  return { url: data.secure_url, path }
+}

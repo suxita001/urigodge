@@ -9,6 +9,7 @@ import ConfirmDialog from '../ui/ConfirmDialog'
 import { TextInput, Toggle } from '../ui/Inputs'
 import HoursEditor from './HoursEditor'
 import LocationPicker from './LocationPicker'
+import MapsLinkField from './MapsLinkField'
 import { EmptyState } from './AdminUI'
 
 export interface BranchChangeLog {
@@ -193,6 +194,9 @@ function BranchForm({ initial, onCancel, onSave }: { initial: Branch; onCancel: 
       </div>
       <div>
         <h3 className="text-[14px] font-bold text-ink mb-2">ლოკაცია</h3>
+        <div className="mb-4">
+          <MapsLinkField value={b.mapsUrl} onChange={(mapsUrl) => set({ mapsUrl })} onCoords={(coordinates) => set({ coordinates })} />
+        </div>
         <LocationPicker value={b.coordinates} onChange={(coordinates) => set({ coordinates })} />
       </div>
       <div>

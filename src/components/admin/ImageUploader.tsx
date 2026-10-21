@@ -1,8 +1,8 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { ImagePlus, RefreshCw, Trash2, GripVertical, UploadCloud } from 'lucide-react'
+import { ImagePlus, RefreshCw, Trash2, GripVertical, UploadCloud, Link2 } from 'lucide-react'
 import type { ImageKind } from '../../data/types'
-import { uploadRestaurantImage } from '../../services/storageService'
+import { ImageLinkError, uploadRestaurantImage, uploadRestaurantImageFromUrl } from '../../services/storageService'
 import { getFirebaseErrorMessage } from '../../utils/firebaseErrors'
 import { useToast } from '../../hooks/useToast'
 
@@ -22,7 +22,67 @@ function useUploader(restaurantId: string, kind: ImageKind) {
       setProgress(null)
     }
   }
-  return { upload, progress }
+  async function uploadLink(link: string): Promise<string | null> {
+    setProgress(45)
+    try {
+      const { url } = await uploadRestaurantImageFromUrl(restaurantId, kind, link)
+      return url
+    } catch (error) {
+      toast.error(error instanceof ImageLinkError ? error.message : 'ფოტო ამ ბმულიდან ვერ ჩაიტვირთა.')
+      return null
+    } finally {
+      setProgress(null)
+    }
+  }
+  return { upload, uploadLink, progress }
+}
+
+/** A small "paste a link" row under every uploader: Google Drive, Dropbox, Facebook image address… */
+function LinkImport({ busy, multiple, onLinks }: { busy: boolean; multiple?: boolean; onLinks: (links: string[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const links = text.split(/\s+/).map((l) => l.trim()).filter((l) => /^https?:\/\//i.test(l))
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="mt-2 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-green hover:underline">
+        <Link2 size={14} /> ან ჩასვი ბმული (Drive, Facebook…)
+      </button>
+    )
+  }
+  return (
+    <div className="mt-2 flex flex-col sm:flex-row gap-2">
+      {multiple ? (
+        <textarea
+          rows={2}
+          autoFocus
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="ჩასვი ერთი ან რამდენიმე ბმული (თითო ახალ ხაზზე)"
+          className="flex-1 rounded-xl border border-border bg-white px-3 py-2 text-[13.5px] focus:outline-none focus:ring-2 focus:ring-green/25 resize-none"
+        />
+      ) : (
+        <input
+          autoFocus
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && links.length && (e.preventDefault(), onLinks(links.slice(0, 1)), setText(''), setOpen(false))}
+          placeholder="https://drive.google.com/… ან ფოტოს მისამართი"
+          className="flex-1 h-10 rounded-xl border border-border bg-white px-3 text-[13.5px] focus:outline-none focus:ring-2 focus:ring-green/25"
+        />
+      )}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={busy || links.length === 0}
+          onClick={() => { onLinks(multiple ? links : links.slice(0, 1)); setText(''); setOpen(false) }}
+          className="h-10 px-4 rounded-xl bg-green text-cream text-[13px] font-bold disabled:opacity-50"
+        >
+          ჩატვირთვა{multiple && links.length > 1 ? ` (${links.length})` : ''}
+        </button>
+        <button type="button" onClick={() => { setOpen(false); setText('') }} className="h-10 px-3 rounded-xl border border-border text-[13px] font-bold text-ink-soft">გაუქმება</button>
+      </div>
+    </div>
+  )
 }
 
 function ProgressOverlay({ progress }: { progress: number }) {
@@ -49,7 +109,7 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ restaurantId, kind, value, onChange, label, aspect = 'aspect-[16/9]', hint }: ImageUploaderProps) {
   const input = useRef<HTMLInputElement>(null)
-  const { upload, progress } = useUploader(restaurantId, kind)
+  const { upload, uploadLink, progress } = useUploader(restaurantId, kind)
 
   async function handleFile(file: File | undefined) {
     if (!file) return
@@ -102,6 +162,7 @@ export function ImageUploader({ restaurantId, kind, value, onChange, label, aspe
           )}
         </button>
       )}
+      <LinkImport busy={progress !== null} onLinks={async ([link]) => { const url = await uploadLink(link); if (url) onChange(url) }} />
       {hint && <p className="mt-1.5 text-[12px] text-ink-faint">{hint}</p>}
     </div>
   )
@@ -134,7 +195,7 @@ function GalleryTile({ url, onRemove }: { url: string; onRemove: () => void }) {
 
 export function GalleryUploader({ restaurantId, value, onChange }: { restaurantId: string; value: string[]; onChange: (urls: string[]) => void }) {
   const input = useRef<HTMLInputElement>(null)
-  const { upload, progress } = useUploader(restaurantId, 'gallery')
+  const { upload, uploadLink, progress } = useUploader(restaurantId, 'gallery')
 
   async function handleFiles(files: FileList | null) {
     if (!files) return
@@ -173,6 +234,20 @@ export function GalleryUploader({ restaurantId, value, onChange }: { restaurantI
           </button>
         </li>
       </Reorder.Group>
+      <LinkImport
+        multiple
+        busy={progress !== null}
+        onLinks={async (links) => {
+          let next = value
+          for (const link of links) {
+            const url = await uploadLink(link)
+            if (url) {
+              next = [...next, url]
+              onChange(next)
+            }
+          }
+        }}
+      />
     </div>
   )
 }

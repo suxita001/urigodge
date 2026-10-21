@@ -7,6 +7,7 @@ import { Select, TextArea, TextInput, Toggle } from '../ui/Inputs'
 import { ImageUploader, GalleryUploader } from './ImageUploader'
 import HoursEditor from './HoursEditor'
 import LocationPicker from './LocationPicker'
+import MapsLinkField from './MapsLinkField'
 import { aiPriceLevel } from '../../services/aiService'
 import { priceLabel, priceSymbol } from '../../lib/format'
 import { MAX_FEATURED } from '../../lib/site'
@@ -151,7 +152,12 @@ export function ContactFields({ draft, set, errors = {} }: { draft: Draft; set: 
 }
 
 export function LocationFields({ draft, set }: { draft: Draft; set: SetDraft }) {
-  return <LocationPicker value={draft.coordinates} onChange={(coordinates) => set({ coordinates })} />
+  return (
+    <div className="flex flex-col gap-5">
+      <MapsLinkField value={draft.mapsUrl} onChange={(mapsUrl) => set({ mapsUrl })} onCoords={(coordinates) => set({ coordinates })} />
+      <LocationPicker value={draft.coordinates} onChange={(coordinates) => set({ coordinates })} />
+    </div>
+  )
 }
 
 export function HoursFields({ draft, set }: { draft: Draft; set: SetDraft }) {
@@ -249,6 +255,7 @@ export function cleanDraft(d: Draft): Draft {
     address: trimText(d.address),
     phone: d.phone.trim(),
     website: d.website?.trim() || undefined,
+    mapsUrl: d.mapsUrl?.trim() || undefined,
     socialLinks: { instagram: d.socialLinks?.instagram?.trim() || undefined, facebook: d.socialLinks?.facebook?.trim() || undefined },
     coverImage: d.coverImage || d.images[0] || '',
     images: d.coverImage && !d.images.includes(d.coverImage) ? [d.coverImage, ...d.images] : d.images,

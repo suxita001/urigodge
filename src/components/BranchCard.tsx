@@ -1,4 +1,5 @@
-import { MapPin, Phone, Clock3, Star } from 'lucide-react'
+import { MapPin, Phone, Clock3, Star, ExternalLink } from 'lucide-react'
+import { placeLink } from '../lib/maps'
 import type { Branch } from '../data/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { todayHoursLabel } from '../data/helpers'
@@ -47,6 +48,14 @@ export default function BranchCard({
           {t('map_view_btn')}
         </span>
       </button>
+      <a
+        href={placeLink(branch.mapsUrl, branch.coordinates)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-white text-[12.5px] font-bold text-ink hover:border-green hover:text-green"
+      >
+        <ExternalLink size={13} /> Google Maps
+      </a>
       {sharePath && (
         <div className="absolute top-3 right-3">
           <CopyLinkButton path={sharePath} variant="icon" label={t('share_copy_branch')} />
