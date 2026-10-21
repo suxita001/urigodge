@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { X, MapPin, ArrowUpRight } from 'lucide-react'
-import type { Restaurant } from '../data/types'
+import type { Branch, Restaurant } from '../data/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { categoryMap } from '../data/categories'
 import { priceSymbol, venueName } from '../lib/format'
@@ -10,7 +10,7 @@ import { formatDistance } from '../lib/geo'
 import { nearestBranch } from '../lib/filters'
 import { useUserLocation } from '../context/LocationContext'
 
-export default function MapPreviewCard({ restaurant, onClose }: { restaurant: Restaurant; onClose: () => void }) {
+export default function MapPreviewCard({ restaurant, branch, onClose }: { restaurant: Restaurant; branch?: Branch; onClose: () => void }) {
   const { t, tx, lang } = useLanguage()
   const { location } = useUserLocation()
 
@@ -31,18 +31,21 @@ export default function MapPreviewCard({ restaurant, onClose }: { restaurant: Re
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-[16px] text-ink leading-snug">{venueName(restaurant, lang)}</h3>
+          <h3 className="font-bold text-[16px] text-ink leading-snug">
+            {venueName(restaurant, lang)}
+            {branch && <span className="block text-[13px] font-semibold text-green">{tx(branch.name)}</span>}
+          </h3>
           <span className="text-[12.5px] font-semibold text-ink-faint shrink-0 pt-0.5">{priceSymbol(restaurant.priceLevel)}</span>
         </div>
         <p className="mt-1.5 flex items-start gap-1.5 text-[13px] text-ink-soft leading-relaxed">
           <MapPin size={13} className="mt-0.5 shrink-0" />
           <span>
-            {tx(restaurant.address)}
+            {tx(branch?.address ?? restaurant.address)}
             {location && <span className="font-semibold text-ink"> · {formatDistance(nearestBranch(restaurant, location), lang)}</span>}
           </span>
         </p>
         <Link
-          to={restaurantPath(restaurant.slug)}
+          to={branch ? `${restaurantPath(restaurant.slug)}?branch=${encodeURIComponent(branch.id)}` : restaurantPath(restaurant.slug)}
           className="mt-3.5 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-green text-cream font-bold text-[13.5px] hover:bg-green-dark transition-colors"
         >
           {t('card_view')}

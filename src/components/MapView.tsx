@@ -2,7 +2,30 @@ import { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
-import type { Restaurant, Coordinates } from '../data/types'
+import type { Branch, Restaurant, Coordinates } from '../data/types'
+import { distanceMeters } from '../lib/geo'
+
+/** One pin on the map: a restaurant's main address or one of its branches. */
+export interface MapPoint {
+  key: string
+  restaurant: Restaurant
+  branch?: Branch
+  coordinates: Coordinates
+}
+
+/**
+ * Pins for a restaurant: its main address and each branch. A branch that sits on the main address
+ * (often the "main branch" entry) is not drawn twice.
+ */
+export function mapPoints(r: Restaurant): MapPoint[] {
+  const points: MapPoint[] = [{ key: r.id, restaurant: r, coordinates: r.coordinates }]
+  for (const b of r.branches) {
+    if (!b.coordinates || !Number.isFinite(b.coordinates.lat)) continue
+    if (points.some((p) => distanceMeters(p.coordinates, b.coordinates) < 25)) continue
+    points.push({ key: `${r.id}:${b.id}`, restaurant: r, branch: b, coordinates: b.coordinates })
+  }
+  return points
+}
 import type { UserLocation } from '../context/LocationContext'
 
 function pinIcon(active: boolean) {
@@ -40,6 +63,18 @@ const userIcon = L.divIcon({
   iconAnchor: [11, 11],
 })
 
+/** Opens the map so that every given point is in view (used when a restaurant has several branches). */
+function FitPoints({ points }: { points: Coordinates[] }) {
+  const map = useMap()
+  const key = points.map((p) => `${p.lat},${p.lng}`).join('|')
+  useEffect(() => {
+    if (points.length < 2) return
+    map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng] as [number, number])), { padding: [48, 48], maxZoom: 15, animate: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, map])
+  return null
+}
+
 function FlyToController({ target, zoom }: { target?: Coordinates; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
@@ -53,7 +88,11 @@ function FlyToController({ target, zoom }: { target?: Coordinates; zoom?: number
 interface MapViewProps {
   restaurants: Restaurant[]
   selectedId?: string
-  onSelect: (r: Restaurant) => void
+  /** A specific pin (`restaurantId` or `restaurantId:branchId`); wins over selectedId. */
+  selectedKey?: string
+  /** Start with all pins in view instead of the given centre and zoom. */
+  fitAll?: boolean
+  onSelect: (r: Restaurant, branch?: Branch) => void
   focusTarget?: Coordinates
   focusZoom?: number
   userLocation?: UserLocation | null
@@ -74,6 +113,8 @@ const GEORGIA_BOUNDS: [[number, number], [number, number]] = [
 export default function MapView({
   restaurants,
   selectedId,
+  selectedKey,
+  fitAll = false,
   onSelect,
   focusTarget,
   focusZoom,
@@ -109,6 +150,7 @@ export default function MapView({
           maxZoom={MAX_ZOOM}
           maxNativeZoom={MAX_ZOOM}
         />
+        {fitAll && <FitPoints points={restaurants.flatMap(mapPoints).map((p) => p.coordinates)} />}
         <FlyToController target={focusTarget} zoom={focusZoom} />
         {userLocation && (
           <>
@@ -130,12 +172,12 @@ export default function MapView({
           spiderfyOnMaxZoom
           showCoverageOnHover={false}
         >
-          {restaurants.map((r) => (
+          {restaurants.flatMap(mapPoints).map((p) => (
             <Marker
-              key={r.id}
-              position={[r.coordinates.lat, r.coordinates.lng]}
-              icon={pinIcon(r.id === selectedId)}
-              eventHandlers={{ click: () => onSelect(r) }}
+              key={p.key}
+              position={[p.coordinates.lat, p.coordinates.lng]}
+              icon={pinIcon(selectedKey ? p.key === selectedKey : p.restaurant.id === selectedId && !p.branch)}
+              eventHandlers={{ click: () => onSelect(p.restaurant, p.branch) }}
             />
           ))}
         </MarkerClusterGroup>

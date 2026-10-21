@@ -273,8 +273,12 @@ export default function RestaurantDetail() {
             <section className="mt-10 rounded-2xl overflow-hidden border border-border h-[320px] md:h-[380px]">
               <MapView
                 restaurants={mapRestaurants}
-                selectedId={restaurant.id}
-                onSelect={() => {}}
+                fitAll
+                selectedKey={activeBranchId ? `${restaurant.id}:${activeBranchId}` : restaurant.id}
+                onSelect={(_, branch) => {
+                  setActiveBranchId(branch?.id)
+                  setFocusTarget(branch?.coordinates ?? restaurant.coordinates)
+                }}
                 focusTarget={focusTarget}
                 focusZoom={16}
                 center={restaurant.coordinates}

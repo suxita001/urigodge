@@ -13,7 +13,7 @@ import { useToast } from '../hooks/useToast'
 import { useUserLocation } from '../context/LocationContext'
 import Spinner from '../components/ui/Spinner'
 import { categories } from '../data/categories'
-import type { Restaurant, Coordinates } from '../data/types'
+import type { Restaurant, Coordinates, Branch } from '../data/types'
 import { searchRestaurants } from '../lib/search'
 import { applyFilters, defaultFilters, type FilterState } from '../lib/filters'
 
@@ -21,6 +21,7 @@ export default function MapPage() {
   const { t, lang } = useLanguage()
   const { restaurants, loading } = useRestaurants()
   const [selected, setSelected] = useState<Restaurant | null>(null)
+  const [selectedBranch, setSelectedBranch] = useState<Branch | undefined>(undefined)
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [query, setQuery] = useState('')
   const toast = useToast()
@@ -38,9 +39,10 @@ export default function MapPage() {
     return applyFilters(list, filters)
   }, [restaurants, filters, query, lang])
 
-  function select(r: Restaurant) {
+  function select(r: Restaurant, branch?: Branch) {
     setSelected(r)
-    setFocus(r.coordinates)
+    setSelectedBranch(branch)
+    setFocus(branch?.coordinates ?? r.coordinates)
   }
 
   async function goToMe() {
@@ -55,7 +57,7 @@ export default function MapPage() {
 
   return (
     <div className="relative isolate h-[calc(100dvh-64px)] md:h-[calc(100dvh-72px)] w-full overflow-hidden">
-      <MapView restaurants={filtered} selectedId={selected?.id} onSelect={select} focusTarget={focus} userLocation={location} />
+      <MapView restaurants={filtered} selectedKey={selected ? (selectedBranch ? `${selected.id}:${selectedBranch.id}` : selected.id) : undefined} onSelect={select} focusTarget={focus} userLocation={location} />
 
       <button
         type="button"
@@ -100,7 +102,7 @@ export default function MapPage() {
             transition={{ duration: 0.25 }}
             className="hidden md:block absolute bottom-6 left-6 z-[400] w-[340px]"
           >
-            <MapPreviewCard restaurant={selected} onClose={() => setSelected(null)} />
+            <MapPreviewCard restaurant={selected} branch={selectedBranch} onClose={() => setSelected(null)} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -115,7 +117,7 @@ export default function MapPage() {
             transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
             className="md:hidden fixed bottom-0 left-0 right-0 z-[400] p-4"
           >
-            <MapPreviewCard restaurant={selected} onClose={() => setSelected(null)} />
+            <MapPreviewCard restaurant={selected} branch={selectedBranch} onClose={() => setSelected(null)} />
           </motion.div>
         )}
       </AnimatePresence>
