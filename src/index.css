@@ -26,8 +26,11 @@
   --font-sans: 'Manrope', 'Noto Sans Georgian', system-ui, sans-serif;
   --font-display: 'Noto Sans Georgian', 'Manrope', system-ui, sans-serif;
 
-  --shadow-card: 0 1px 2px rgba(28, 26, 22, 0.04), 0 8px 24px -8px rgba(28, 26, 22, 0.10);
-  --shadow-card-hover: 0 4px 8px rgba(28, 26, 22, 0.06), 0 20px 40px -12px rgba(28, 26, 22, 0.16);
+  --shadow-card: 0 1px 1px rgba(28, 26, 22, 0.03), 0 2px 4px rgba(28, 26, 22, 0.03), 0 12px 28px -12px rgba(28, 26, 22, 0.12);
+  --shadow-card-hover: 0 2px 4px rgba(28, 26, 22, 0.04), 0 12px 20px -8px rgba(28, 26, 22, 0.08), 0 32px 56px -20px rgba(28, 26, 22, 0.22);
+  --shadow-float: 0 1px 2px rgba(28, 26, 22, 0.06), 0 18px 48px -12px rgba(28, 26, 22, 0.28);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --shadow-nav: 0 1px 0 rgba(28, 26, 22, 0.06), 0 12px 24px -16px rgba(28, 26, 22, 0.14);
 }
 
@@ -52,10 +55,35 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
   --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.45), 0 20px 40px -12px rgba(0, 0, 0, 0.7);
   --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 24px -16px rgba(0, 0, 0, 0.7);
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.5), 0 18px 48px -12px rgba(0, 0, 0, 0.75);
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Height of the phone tab bar (0 wherever it isn't shown), so fixed things can sit above it. */
+:root {
+  --tabbar-h: 0px;
+}
+@media (max-width: 767px) {
+  :root:has([data-tabbar]) {
+    --tabbar-h: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* A barely-there paper grain over the page: takes the flat, digital edge off the cream. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme='dark'] body::after {
+  opacity: 0.05;
 }
 
 html {
@@ -295,4 +323,20 @@ body {
   .hero-caption {
     animation: none;
   }
+}
+
+/* Horizontal shelves that snap card by card on touch screens */
+.shelf {
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 20px;
+  overscroll-behavior-x: contain;
+}
+.shelf > * {
+  scroll-snap-align: start;
+}
+
+/* Gentle fade at the edges of a scrolling row */
+.fade-x {
+  mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
 }

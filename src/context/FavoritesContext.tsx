@@ -84,7 +84,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             role="alert"
-            className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[700] max-w-[calc(100vw-32px)] px-5 py-3 rounded-full bg-ink text-cream text-[13.5px] font-semibold shadow-card-hover"
+            className="fixed bottom-[calc(var(--tabbar-h)+20px)] md:bottom-5 left-1/2 -translate-x-1/2 z-[700] max-w-[calc(100vw-32px)] px-5 py-3 rounded-full bg-ink text-cream text-[13.5px] font-semibold shadow-card-hover"
           >
             {error}
           </motion.div>

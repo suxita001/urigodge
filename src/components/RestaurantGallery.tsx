@@ -6,15 +6,25 @@ export default function RestaurantGallery({ images, alt }: { images: string[]; a
   const [index, setIndex] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
 
+  // Scroll only the strip itself (scrollIntoView would also jump the whole page to the gallery).
   function goTo(i: number) {
+    const track = trackRef.current
     const clamped = (i + images.length) % images.length
     setIndex(clamped)
-    trackRef.current?.children[clamped]?.scrollIntoView({ behavior: 'smooth', inline: 'start' })
+    track?.scrollTo({ left: clamped * track.clientWidth, behavior: 'smooth' })
+  }
+
+  // Swiping on a phone moves the dots too.
+  function onScroll() {
+    const track = trackRef.current
+    if (!track || !track.clientWidth) return
+    const i = Math.round(track.scrollLeft / track.clientWidth)
+    if (i !== index) setIndex(i)
   }
 
   return (
     <div className="relative w-full h-[260px] sm:h-[340px] md:h-[440px] bg-cream-2 overflow-hidden">
-      <div ref={trackRef} className="flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+      <div ref={trackRef} onScroll={onScroll} className="flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar overscroll-x-contain">
         {images.map((src, i) => (
           <div key={i} className="w-full h-full shrink-0 snap-start">
             <img
@@ -50,6 +60,9 @@ export default function RestaurantGallery({ images, alt }: { images: string[]; a
             <ChevronRight size={18} />
           </button>
 
+          <span className="absolute top-4 right-4 md:top-auto md:bottom-4 px-2.5 py-1 rounded-full bg-night/50 backdrop-blur-md text-snow text-[12px] font-bold tabular-nums">
+            {index + 1} / {images.length}
+          </span>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
             {images.map((_, i) => (
               <button

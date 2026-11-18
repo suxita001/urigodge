@@ -15,3 +15,9 @@ export const MAX_FEATURED = 6
  * admins — sees any booking button, page, tab or menu item. Flip to true to bring it all back.
  */
 export const BOOKING_ENABLED = false
+
+/** urigod's own social pages. An icon shows in the footer only once its link is filled in. */
+export const SOCIAL_LINKS = {
+  instagram: '',
+  facebook: '',
+}

@@ -56,7 +56,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative isolate h-[calc(100dvh-64px)] md:h-[calc(100dvh-72px)] w-full overflow-hidden">
+    <div className="relative isolate h-[calc(100dvh-64px-var(--tabbar-h))] md:h-[calc(100dvh-72px)] w-full overflow-hidden">
       <MapView restaurants={filtered} selectedKey={selected ? (selectedBranch ? `${selected.id}:${selectedBranch.id}` : selected.id) : undefined} onSelect={select} focusTarget={focus} userLocation={location} />
 
       <button
@@ -115,7 +115,7 @@ export default function MapPage() {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'tween', duration: 0.28, ease: 'easeOut' }}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-[400] p-4"
+            className="md:hidden fixed bottom-[var(--tabbar-h)] left-0 right-0 z-[400] p-3"
           >
             <MapPreviewCard restaurant={selected} branch={selectedBranch} onClose={() => setSelected(null)} />
           </motion.div>

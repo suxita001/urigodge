@@ -152,7 +152,7 @@ export default function ChatWidget() {
             transition={{ duration: 0.18 }}
             onClick={() => setOpen(true)}
             aria-label={t('chat_open')}
-            className={`fixed z-40 right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 w-14 h-14 sm:w-auto sm:h-auto sm:pl-4 sm:pr-5 sm:py-3.5 justify-center rounded-full bg-ink text-cream shadow-card-hover items-center gap-2 text-[14px] font-bold hover:bg-green-dark transition-colors ${
+            className={`fixed z-40 right-4 sm:right-6 bottom-[calc(var(--tabbar-h)+12px)] md:bottom-6 w-14 h-14 sm:w-auto sm:h-auto sm:pl-4 sm:pr-5 sm:py-3.5 justify-center rounded-full bg-ink text-cream shadow-card-hover items-center gap-2 text-[14px] font-bold hover:bg-green-dark transition-colors ${
               hideFabOnMobile ? 'hidden md:flex' : 'flex'
             }`}
           >

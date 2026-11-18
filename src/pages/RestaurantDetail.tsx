@@ -179,17 +179,33 @@ export default function RestaurantDetail() {
             </span>
           </div>
 
-          {/* Action buttons */}
-          <div className="mt-6 flex flex-wrap gap-3">
+          {/* Action buttons: two thumb-sized rows on phones, one row on wider screens */}
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:gap-3 [&>*]:justify-center">
             <a
               href={(() => { const b = restaurant.branches.find((x) => x.id === activeBranchId); return b ? directionsLink(b.mapsUrl, b.coordinates) : directionsLink(restaurant.mapsUrl, restaurant.coordinates) })()}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-green text-cream font-bold text-[14px] hover:bg-green-dark transition-colors"
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-3 rounded-full bg-green text-cream font-bold text-[14px] whitespace-nowrap hover:bg-green-dark transition-colors shadow-card"
             >
               <Navigation2 size={16} />
               {t('restaurant_route')}
             </a>
+            <Link
+              to={menuPath(restaurant.slug)}
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-3 rounded-full border border-green text-green font-bold text-[14px] whitespace-nowrap hover:bg-green-light transition-colors"
+            >
+              <UtensilsCrossed size={16} />
+              {t('restaurant_menu')}
+            </Link>
+            {BOOKING_ENABLED && restaurant.booking.enabled && (
+              <Link
+                to={`${restaurantPath(restaurant.slug)}/book`}
+                className="col-span-2 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink text-cream font-bold text-[14px] hover:opacity-90 transition-opacity"
+              >
+                <CalendarCheck2 size={16} />
+                {t('book_cta')}
+              </Link>
+            )}
             <a
               href={`tel:${restaurant.phone.replace(/\s/g, '')}`}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border bg-white text-ink font-bold text-[14px] hover:bg-cream-2 transition-colors"
@@ -197,24 +213,10 @@ export default function RestaurantDetail() {
               <Phone size={16} />
               {t('restaurant_call')}
             </a>
-            {BOOKING_ENABLED && restaurant.booking.enabled && (
-              <Link
-                to={`${restaurantPath(restaurant.slug)}/book`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink text-cream font-bold text-[14px] hover:opacity-90 transition-opacity"
-              >
-                <CalendarCheck2 size={16} />
-                {t('book_cta')}
-              </Link>
-            )}
-            <Link
-              to={menuPath(restaurant.slug)}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-green text-green font-bold text-[14px] hover:bg-green-light transition-colors"
-            >
-              <UtensilsCrossed size={16} />
-              {t('restaurant_menu')}
-            </Link>
-            <FavoriteButton restaurantId={restaurant.slug} variant="pill" />
-            <CopyLinkButton path={restaurantPath(restaurant.slug)} />
+            <FavoriteButton restaurantId={restaurant.slug} variant="pill" className="justify-center" />
+            <div className="col-span-2 sm:contents [&>button]:w-full [&>button]:justify-center sm:[&>button]:w-auto">
+              <CopyLinkButton path={restaurantPath(restaurant.slug)} />
+            </div>
           </div>
         </motion.div>
 

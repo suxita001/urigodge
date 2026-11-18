@@ -15,6 +15,7 @@ import { LocationProvider } from './context/LocationContext'
 import { RequireAuth, RequireRole } from './components/RouteGuards'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import MobileTabBar from './components/MobileTabBar'
 import ChatWidget from './components/ChatWidget'
 import Home from './pages/Home'
 import Restaurants from './pages/Restaurants'
@@ -118,7 +119,7 @@ function PublicLayout() {
     if (!isStaff) return <Maintenance message={site.message} />
   }
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col bg-cream pb-[var(--tabbar-h)]">
       {site.maintenance && isStaff && <MaintenanceStrip />}
       <Navbar />
       <main className="flex-1">
@@ -127,6 +128,7 @@ function PublicLayout() {
         </Suspense>
       </main>
       {pathname !== '/map' && <Footer />}
+      <MobileTabBar />
       <ChatWidget />
       <PageViewTracker />
     </div>

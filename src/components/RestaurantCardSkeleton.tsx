@@ -1,7 +1,7 @@
 export default function RestaurantCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-card animate-pulse" aria-hidden="true">
-      <div className="aspect-[4/3] bg-cream-2" />
+    <div className="bg-white rounded-[22px] border border-border/80 overflow-hidden shadow-card animate-pulse" aria-hidden="true">
+      <div className="aspect-[4/3] bg-cream-2 m-1.5 mb-0 rounded-[17px]" />
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="h-4 w-2/5 rounded-full bg-cream-2" />

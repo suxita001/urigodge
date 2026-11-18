@@ -71,7 +71,7 @@ export default function Restaurants() {
   return (
     <div className="max-w-7xl mx-auto px-5 md:px-8 py-10 md:py-14">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <h1 className="text-[28px] md:text-[36px] font-extrabold text-ink tracking-tight">{t('restaurants_title')}</h1>
+        <h1 className="text-[30px] md:text-[42px] font-extrabold text-ink tracking-tight leading-tight">{t('restaurants_title')}</h1>
         <p className="mt-2 text-[15px] text-ink-soft">{t('restaurants_subtitle')}</p>
       </motion.div>
 
@@ -89,7 +89,7 @@ export default function Restaurants() {
         </div>
       )}
 
-      <div className="mt-6 sticky top-16 md:top-[72px] z-20 bg-cream/95 py-3 -mx-5 px-5 md:mx-0 md:px-0 md:bg-transparent md:static">
+      <div className="mt-6 sticky top-16 md:top-[72px] z-20 bg-cream/85 backdrop-blur-md border-b border-border/60 md:border-0 md:backdrop-blur-none py-3 -mx-5 px-5 md:mx-0 md:px-0 md:bg-transparent md:static">
         <FilterBar filters={filters} onChange={setFilters} sort={sort} onSortChange={changeSort} resultCount={results.length} />
       </div>
 
